@@ -1,3 +1,7 @@
+import {
+    ExpoSpeechRecognitionModule,
+    useSpeechRecognitionEvent,
+} from 'expo-speech-recognition';
 import { useMemo, useState } from 'react';
 import {
     ActivityIndicator,
@@ -57,6 +61,33 @@ const BASE_LANGUAGES: Language[] = [
 
 const SOURCE_LANGUAGES: Language[] = [{ code: 'auto', name: 'Auto Detect' }, ...BASE_LANGUAGES];
 const TARGET_LANGUAGES: Language[] = BASE_LANGUAGES;
+
+const SPEECH_LOCALE_BY_CODE: Record<string, string> = {
+    en: 'en-US',
+    bn: 'bn-BD',
+    hi: 'hi-IN',
+    ar: 'ar-SA',
+    es: 'es-ES',
+    fr: 'fr-FR',
+    de: 'de-DE',
+    it: 'it-IT',
+    pt: 'pt-PT',
+    ru: 'ru-RU',
+    tr: 'tr-TR',
+    ja: 'ja-JP',
+    ko: 'ko-KR',
+    'zh-CN': 'zh-CN',
+    'zh-TW': 'zh-TW',
+    ur: 'ur-PK',
+    id: 'id-ID',
+    ms: 'ms-MY',
+    th: 'th-TH',
+    vi: 'vi-VN',
+    nl: 'nl-NL',
+    sv: 'sv-SE',
+    pl: 'pl-PL',
+    uk: 'uk-UA',
+};
 
 const MAX_CHARS_PER_REQUEST = 450;
 const MAX_HISTORY = 5;
@@ -201,6 +232,40 @@ export default function HomeScreen() {
     const [progressIndex, setProgressIndex] = useState(0);
     const [progressTotal, setProgressTotal] = useState(0);
     const [history, setHistory] = useState<HistoryItem[]>([]);
+    const [isListening, setIsListening] = useState(false);
+    const [speechError, setSpeechError] = useState('');
+    const [interimTranscript, setInterimTranscript] = useState('');
+
+    useSpeechRecognitionEvent('start', () => {
+        setIsListening(true);
+        setSpeechError('');
+    });
+
+    useSpeechRecognitionEvent('end', () => {
+        setIsListening(false);
+        setInterimTranscript('');
+    });
+
+    useSpeechRecognitionEvent('error', (event) => {
+        setIsListening(false);
+        setInterimTranscript('');
+        setSpeechError(event.message ?? 'Voice input failed. Please try again.');
+    });
+
+    useSpeechRecognitionEvent('result', (event) => {
+        const transcript = event.results?.[0]?.transcript?.trim();
+        if (!transcript) return;
+
+        if (event.isFinal) {
+            setSourceText((current) =>
+                current.trim().length > 0 ? `${current.trimEnd()} ${transcript}` : transcript
+            );
+            setInterimTranscript('');
+            return;
+        }
+
+        setInterimTranscript(transcript);
+    });
 
     const pickerLanguages = activePicker === 'source' ? SOURCE_LANGUAGES : TARGET_LANGUAGES;
 
@@ -261,8 +326,51 @@ export default function HomeScreen() {
         setSourceText('');
         setTranslatedText('');
         setError('');
+        setSpeechError('');
+        setInterimTranscript('');
         setProgressIndex(0);
         setProgressTotal(0);
+    };
+
+    const handleStartVoiceInput = async () => {
+        try {
+            const isAvailable = ExpoSpeechRecognitionModule.isRecognitionAvailable();
+            if (!isAvailable) {
+                setSpeechError('Voice recognition is not available on this device.');
+                return;
+            }
+
+            const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+            if (!permission.granted) {
+                setSpeechError('Microphone or speech permission was not granted.');
+                return;
+            }
+
+            const locale =
+                sourceLanguage.code !== 'auto'
+                    ? SPEECH_LOCALE_BY_CODE[sourceLanguage.code] ?? 'en-US'
+                    : undefined;
+
+            setSpeechError('');
+
+            ExpoSpeechRecognitionModule.start({
+                lang: locale,
+                interimResults: true,
+                maxAlternatives: 1,
+                continuous: false,
+            });
+        } catch (voiceError) {
+            console.error(voiceError);
+            setSpeechError('Could not start voice input. Please try again.');
+        }
+    };
+
+    const handleStopVoiceInput = () => {
+        try {
+            ExpoSpeechRecognitionModule.stop();
+        } catch (voiceError) {
+            console.error(voiceError);
+        }
     };
 
     const pushHistory = (inputText: string, outputText: string) => {
@@ -388,10 +496,33 @@ export default function HomeScreen() {
                     />
 
                     <View style={styles.actionsRow}>
+                        <Pressable
+                            onPress={isListening ? handleStopVoiceInput : handleStartVoiceInput}
+                            style={[
+                                styles.secondaryButton,
+                                styles.voiceButton,
+                                {
+                                    borderColor: colors.border,
+                                    backgroundColor: isListening ? colors.accentSoft : 'transparent',
+                                },
+                            ]}
+                        >
+                            <ThemedText type="defaultSemiBold" style={{ color: isListening ? colors.accent : undefined }}>
+                                {isListening ? 'Stop Voice' : 'Voice Input'}
+                            </ThemedText>
+                        </Pressable>
                         <Pressable onPress={handleClear} style={[styles.secondaryButton, { borderColor: colors.border }]}>
                             <ThemedText type="defaultSemiBold">Clear</ThemedText>
                         </Pressable>
                     </View>
+
+                    {interimTranscript ? (
+                        <ThemedText style={[styles.voiceHint, { color: colors.textMuted }]}>
+                            {`Listening: ${interimTranscript}`}
+                        </ThemedText>
+                    ) : null}
+
+                    {speechError ? <ThemedText style={styles.errorText}>{speechError}</ThemedText> : null}
                 </View>
 
                 <Pressable
@@ -551,7 +682,15 @@ const styles = StyleSheet.create({
     },
     actionsRow: {
         flexDirection: 'row',
+        gap: 8,
         justifyContent: 'flex-end',
+    },
+    voiceButton: {
+        minWidth: 110,
+    },
+    voiceHint: {
+        fontSize: 13,
+        fontWeight: '500',
     },
     secondaryButton: {
         borderWidth: 1,
