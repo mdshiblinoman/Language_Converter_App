@@ -1,8 +1,4 @@
-import {
-    ExpoSpeechRecognitionModule,
-    useSpeechRecognitionEvent,
-} from 'expo-speech-recognition';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Modal,
@@ -14,84 +10,22 @@ import {
     View,
 } from 'react-native';
 
+import { useVoiceInput } from '@/app/_hooks/use-voice-input';
+import {
+    SOURCE_LANGUAGES,
+    TARGET_LANGUAGES,
+    type Language,
+} from '@/app/_lib/languages';
+import {
+    chunkTextForTranslation,
+    translateTextInChunks,
+} from '@/app/_lib/text-translation';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
-type Language = {
-    code: string;
-    name: string;
-};
-
 type PickerType = 'source' | 'target' | null;
 
-type HistoryItem = {
-    id: string;
-    sourceCode: string;
-    targetCode: string;
-    inputPreview: string;
-    outputPreview: string;
-};
-
-const BASE_LANGUAGES: Language[] = [
-    { code: 'en', name: 'English' },
-    { code: 'bn', name: 'Bangla' },
-    { code: 'hi', name: 'Hindi' },
-    { code: 'ar', name: 'Arabic' },
-    { code: 'es', name: 'Spanish' },
-    { code: 'fr', name: 'French' },
-    { code: 'de', name: 'German' },
-    { code: 'it', name: 'Italian' },
-    { code: 'pt', name: 'Portuguese' },
-    { code: 'ru', name: 'Russian' },
-    { code: 'tr', name: 'Turkish' },
-    { code: 'ja', name: 'Japanese' },
-    { code: 'ko', name: 'Korean' },
-    { code: 'zh-CN', name: 'Chinese (Simplified)' },
-    { code: 'zh-TW', name: 'Chinese (Traditional)' },
-    { code: 'ur', name: 'Urdu' },
-    { code: 'id', name: 'Indonesian' },
-    { code: 'ms', name: 'Malay' },
-    { code: 'th', name: 'Thai' },
-    { code: 'vi', name: 'Vietnamese' },
-    { code: 'nl', name: 'Dutch' },
-    { code: 'sv', name: 'Swedish' },
-    { code: 'pl', name: 'Polish' },
-    { code: 'uk', name: 'Ukrainian' },
-];
-
-const SOURCE_LANGUAGES: Language[] = [{ code: 'auto', name: 'Auto Detect' }, ...BASE_LANGUAGES];
-const TARGET_LANGUAGES: Language[] = BASE_LANGUAGES;
-
-const SPEECH_LOCALE_BY_CODE: Record<string, string> = {
-    en: 'en-US',
-    bn: 'bn-BD',
-    hi: 'hi-IN',
-    ar: 'ar-SA',
-    es: 'es-ES',
-    fr: 'fr-FR',
-    de: 'de-DE',
-    it: 'it-IT',
-    pt: 'pt-PT',
-    ru: 'ru-RU',
-    tr: 'tr-TR',
-    ja: 'ja-JP',
-    ko: 'ko-KR',
-    'zh-CN': 'zh-CN',
-    'zh-TW': 'zh-TW',
-    ur: 'ur-PK',
-    id: 'id-ID',
-    ms: 'ms-MY',
-    th: 'th-TH',
-    vi: 'vi-VN',
-    nl: 'nl-NL',
-    sv: 'sv-SE',
-    pl: 'pl-PL',
-    uk: 'uk-UA',
-};
-
 const MAX_CHARS_PER_REQUEST = 450;
-const MAX_HISTORY = 5;
-const MAX_RETRIES = 2;
 
 const lightColors = {
     bg: '#f4f7ff',
@@ -115,108 +49,6 @@ const darkColors = {
     successText: '#7fe2ae',
 };
 
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const getLanguageName = (code: string) => {
-    const language = SOURCE_LANGUAGES.find((item) => item.code === code);
-    return language?.name ?? code;
-};
-
-const buildPreview = (text: string, maxLength: number) => {
-    const normalized = text.replace(/\s+/g, ' ').trim();
-    if (normalized.length <= maxLength) return normalized;
-    return `${normalized.slice(0, maxLength)}...`;
-};
-
-const splitLargeToken = (token: string, maxChars: number) => {
-    if (token.length <= maxChars) return [token];
-
-    const parts: string[] = [];
-    let current = '';
-    const segments = token.split(/(\s+)/);
-
-    for (const segment of segments) {
-        if (!segment) continue;
-
-        if (segment.length > maxChars) {
-            if (current) {
-                parts.push(current);
-                current = '';
-            }
-
-            for (let index = 0; index < segment.length; index += maxChars) {
-                parts.push(segment.slice(index, index + maxChars));
-            }
-            continue;
-        }
-
-        if ((current + segment).length > maxChars) {
-            if (current) parts.push(current);
-            current = segment;
-        } else {
-            current += segment;
-        }
-    }
-
-    if (current) parts.push(current);
-    return parts;
-};
-
-const chunkTextForTranslation = (text: string, maxChars: number) => {
-    const chunks: string[] = [];
-    let current = '';
-    const tokens = text.split(/(\n+)/);
-
-    for (const token of tokens) {
-        if (!token) continue;
-
-        const tokenParts = splitLargeToken(token, maxChars);
-
-        for (const part of tokenParts) {
-            if ((current + part).length > maxChars) {
-                if (current) chunks.push(current);
-                current = part;
-            } else {
-                current += part;
-            }
-        }
-    }
-
-    if (current) chunks.push(current);
-    return chunks;
-};
-
-const requestTranslation = async (chunk: string, sourceCode: string, targetCode: string) => {
-    const endpoint = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk)}&langpair=${encodeURIComponent(`${sourceCode}|${targetCode}`)}`;
-    const response = await fetch(endpoint);
-
-    if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
-    }
-
-    const data = await response.json();
-    const output = data?.responseData?.translatedText;
-
-    if (!output) {
-        throw new Error('No translation returned by the API.');
-    }
-
-    return output as string;
-};
-
-const translateChunkWithRetry = async (chunk: string, sourceCode: string, targetCode: string) => {
-    for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
-        try {
-            return await requestTranslation(chunk, sourceCode, targetCode);
-        } catch (error) {
-            if (attempt === MAX_RETRIES) throw error;
-            await wait(300 + attempt * 300);
-        }
-    }
-
-    throw new Error('Translation retry failed.');
-};
-
 export default function HomeScreen() {
     const scheme = useColorScheme();
     const colors = scheme === 'dark' ? darkColors : lightColors;
@@ -231,40 +63,23 @@ export default function HomeScreen() {
     const [error, setError] = useState('');
     const [progressIndex, setProgressIndex] = useState(0);
     const [progressTotal, setProgressTotal] = useState(0);
-    const [history, setHistory] = useState<HistoryItem[]>([]);
-    const [isListening, setIsListening] = useState(false);
-    const [speechError, setSpeechError] = useState('');
-    const [interimTranscript, setInterimTranscript] = useState('');
 
-    useSpeechRecognitionEvent('start', () => {
-        setIsListening(true);
-        setSpeechError('');
-    });
+    const handleFinalTranscript = useCallback((transcript: string) => {
+        setSourceText((current) =>
+            current.trim().length > 0 ? `${current.trimEnd()} ${transcript}` : transcript
+        );
+    }, []);
 
-    useSpeechRecognitionEvent('end', () => {
-        setIsListening(false);
-        setInterimTranscript('');
-    });
-
-    useSpeechRecognitionEvent('error', (event) => {
-        setIsListening(false);
-        setInterimTranscript('');
-        setSpeechError(event.message ?? 'Voice input failed. Please try again.');
-    });
-
-    useSpeechRecognitionEvent('result', (event) => {
-        const transcript = event.results?.[0]?.transcript?.trim();
-        if (!transcript) return;
-
-        if (event.isFinal) {
-            setSourceText((current) =>
-                current.trim().length > 0 ? `${current.trimEnd()} ${transcript}` : transcript
-            );
-            setInterimTranscript('');
-            return;
-        }
-
-        setInterimTranscript(transcript);
+    const {
+        isListening,
+        speechError,
+        interimTranscript,
+        startVoiceInput,
+        stopVoiceInput,
+        clearVoiceState,
+    } = useVoiceInput({
+        sourceLanguageCode: sourceLanguage.code,
+        onFinalTranscript: handleFinalTranscript,
     });
 
     const pickerLanguages = activePicker === 'source' ? SOURCE_LANGUAGES : TARGET_LANGUAGES;
@@ -326,63 +141,9 @@ export default function HomeScreen() {
         setSourceText('');
         setTranslatedText('');
         setError('');
-        setSpeechError('');
-        setInterimTranscript('');
+        clearVoiceState();
         setProgressIndex(0);
         setProgressTotal(0);
-    };
-
-    const handleStartVoiceInput = async () => {
-        try {
-            const isAvailable = ExpoSpeechRecognitionModule.isRecognitionAvailable();
-            if (!isAvailable) {
-                setSpeechError('Voice recognition is not available on this device.');
-                return;
-            }
-
-            const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-            if (!permission.granted) {
-                setSpeechError('Microphone or speech permission was not granted.');
-                return;
-            }
-
-            const locale =
-                sourceLanguage.code !== 'auto'
-                    ? SPEECH_LOCALE_BY_CODE[sourceLanguage.code] ?? 'en-US'
-                    : undefined;
-
-            setSpeechError('');
-
-            ExpoSpeechRecognitionModule.start({
-                lang: locale,
-                interimResults: true,
-                maxAlternatives: 1,
-                continuous: false,
-            });
-        } catch (voiceError) {
-            console.error(voiceError);
-            setSpeechError('Could not start voice input. Please try again.');
-        }
-    };
-
-    const handleStopVoiceInput = () => {
-        try {
-            ExpoSpeechRecognitionModule.stop();
-        } catch (voiceError) {
-            console.error(voiceError);
-        }
-    };
-
-    const pushHistory = (inputText: string, outputText: string) => {
-        const nextItem: HistoryItem = {
-            id: `${Date.now()}`,
-            sourceCode: sourceLanguage.code,
-            targetCode: targetLanguage.code,
-            inputPreview: buildPreview(inputText, 80),
-            outputPreview: buildPreview(outputText, 80),
-        };
-
-        setHistory((current) => [nextItem, ...current].slice(0, MAX_HISTORY));
     };
 
     const handleTranslate = async () => {
@@ -404,27 +165,18 @@ export default function HomeScreen() {
         setIsTranslating(true);
 
         try {
-            const chunks = chunkTextForTranslation(text, MAX_CHARS_PER_REQUEST);
-            const translatedChunks: string[] = [];
-            setProgressTotal(chunks.length);
-            setProgressIndex(0);
+            const result = await translateTextInChunks({
+                text,
+                sourceCode: sourceLanguage.code,
+                targetCode: targetLanguage.code,
+                maxCharsPerRequest: MAX_CHARS_PER_REQUEST,
+                onProgress: (index, total) => {
+                    setProgressIndex(index);
+                    setProgressTotal(total);
+                },
+            });
 
-            for (let index = 0; index < chunks.length; index += 1) {
-                const chunk = chunks[index];
-                setProgressIndex(index + 1);
-
-                const translatedChunk = await translateChunkWithRetry(
-                    chunk,
-                    sourceLanguage.code,
-                    targetLanguage.code
-                );
-
-                translatedChunks.push(translatedChunk);
-            }
-
-            const finalResult = translatedChunks.join('');
-            setTranslatedText(finalResult);
-            pushHistory(text, finalResult);
+            setTranslatedText(result.translatedText);
         } catch (requestError) {
             console.error(requestError);
             setError('Translation failed for this text. Please try again.');
@@ -445,23 +197,31 @@ export default function HomeScreen() {
         <ThemedView style={[styles.screen, { backgroundColor: colors.bg }]}>
             <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
                 <ThemedText type="title">Language Converter</ThemedText>
-                <ThemedText style={[styles.subtitle, { color: colors.textMuted }]}>Text, paragraph, and document translation</ThemedText>
+                <ThemedText style={[styles.subtitle, { color: colors.textMuted }]}>
+                    Text, paragraph, and document translation
+                </ThemedText>
 
                 <View style={styles.languageRow}>
                     <Pressable
                         onPress={() => openPicker('source')}
-                        style={[styles.languageButton, { backgroundColor: colors.card, borderColor: colors.border }]}
-                    >
+                        style={[
+                            styles.languageButton,
+                            { backgroundColor: colors.card, borderColor: colors.border },
+                        ]}>
                         <ThemedText type="defaultSemiBold">From</ThemedText>
                         <ThemedText>{sourceLanguage.name}</ThemedText>
-                        <ThemedText style={[styles.languageCode, { color: colors.textMuted }]}>{sourceLanguage.code}</ThemedText>
+                        <ThemedText style={[styles.languageCode, { color: colors.textMuted }]}>
+                            {sourceLanguage.code}
+                        </ThemedText>
                     </Pressable>
 
                     <Pressable
                         onPress={handleSwap}
-                        style={[styles.swapButton, { backgroundColor: colors.accentSoft, borderColor: colors.border }]}
-                        accessibilityLabel="Swap languages"
-                    >
+                        style={[
+                            styles.swapButton,
+                            { backgroundColor: colors.accentSoft, borderColor: colors.border },
+                        ]}
+                        accessibilityLabel="Swap languages">
                         <ThemedText type="defaultSemiBold" style={{ color: colors.accent }}>
                             Swap
                         </ThemedText>
@@ -469,11 +229,15 @@ export default function HomeScreen() {
 
                     <Pressable
                         onPress={() => openPicker('target')}
-                        style={[styles.languageButton, { backgroundColor: colors.card, borderColor: colors.border }]}
-                    >
+                        style={[
+                            styles.languageButton,
+                            { backgroundColor: colors.card, borderColor: colors.border },
+                        ]}>
                         <ThemedText type="defaultSemiBold">To</ThemedText>
                         <ThemedText>{targetLanguage.name}</ThemedText>
-                        <ThemedText style={[styles.languageCode, { color: colors.textMuted }]}>{targetLanguage.code}</ThemedText>
+                        <ThemedText style={[styles.languageCode, { color: colors.textMuted }]}>
+                            {targetLanguage.code}
+                        </ThemedText>
                     </Pressable>
                 </View>
 
@@ -497,7 +261,7 @@ export default function HomeScreen() {
 
                     <View style={styles.actionsRow}>
                         <Pressable
-                            onPress={isListening ? handleStopVoiceInput : handleStartVoiceInput}
+                            onPress={isListening ? stopVoiceInput : startVoiceInput}
                             style={[
                                 styles.secondaryButton,
                                 styles.voiceButton,
@@ -505,9 +269,10 @@ export default function HomeScreen() {
                                     borderColor: colors.border,
                                     backgroundColor: isListening ? colors.accentSoft : 'transparent',
                                 },
-                            ]}
-                        >
-                            <ThemedText type="defaultSemiBold" style={{ color: isListening ? colors.accent : undefined }}>
+                            ]}>
+                            <ThemedText
+                                type="defaultSemiBold"
+                                style={{ color: isListening ? colors.accent : undefined }}>
                                 {isListening ? 'Stop Voice' : 'Voice Input'}
                             </ThemedText>
                         </Pressable>
@@ -531,15 +296,12 @@ export default function HomeScreen() {
                     style={[
                         styles.translateButton,
                         { backgroundColor: colors.accent, opacity: isTranslating ? 0.7 : 1 },
-                    ]}
-                >
+                    ]}>
                     {isTranslating ? (
                         <View style={styles.loadingWrap}>
                             <ActivityIndicator color="#ffffff" />
                             <ThemedText style={styles.translateButtonText}>
-                                {progressTotal > 0
-                                    ? `Translating ${progressIndex}/${progressTotal}`
-                                    : 'Translating'}
+                                {progressTotal > 0 ? `Translating ${progressIndex}/${progressTotal}` : 'Translating'}
                             </ThemedText>
                         </View>
                     ) : (
@@ -555,31 +317,13 @@ export default function HomeScreen() {
                         {translatedText || 'Your translated result will appear here.'}
                     </ThemedText>
                 </View>
-
-                {history.length > 0 ? (
-                    <View style={[styles.historyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                        <ThemedText type="defaultSemiBold">Recent Translations</ThemedText>
-                        {history.map((item) => (
-                            <View key={item.id} style={[styles.historyItem, { borderBottomColor: colors.border }]}>
-                                <ThemedText style={[styles.historyLang, { color: colors.textMuted }]}>
-                                    {`${getLanguageName(item.sourceCode)} -> ${getLanguageName(item.targetCode)}`}
-                                </ThemedText>
-                                <ThemedText numberOfLines={1}>{item.inputPreview}</ThemedText>
-                                <ThemedText numberOfLines={1} style={{ color: colors.textMuted }}>
-                                    {item.outputPreview}
-                                </ThemedText>
-                            </View>
-                        ))}
-                    </View>
-                ) : null}
             </ScrollView>
 
             <Modal
                 visible={activePicker !== null}
                 transparent
                 animationType="slide"
-                onRequestClose={() => setActivePicker(null)}
-            >
+                onRequestClose={() => setActivePicker(null)}>
                 <View style={styles.modalOverlay}>
                     <View style={[styles.modalSheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         <ThemedText type="subtitle">Select Language</ThemedText>
@@ -603,8 +347,7 @@ export default function HomeScreen() {
                                 <Pressable
                                     key={language.code}
                                     onPress={() => handleSelectLanguage(language)}
-                                    style={[styles.languageItem, { borderBottomColor: colors.border }]}
-                                >
+                                    style={[styles.languageItem, { borderBottomColor: colors.border }]}>
                                     <ThemedText>{language.name}</ThemedText>
                                     <ThemedText style={{ color: colors.textMuted }}>{language.code}</ThemedText>
                                 </Pressable>
@@ -613,8 +356,7 @@ export default function HomeScreen() {
 
                         <Pressable
                             onPress={() => setActivePicker(null)}
-                            style={[styles.closeButton, { borderColor: colors.border }]}
-                        >
+                            style={[styles.closeButton, { borderColor: colors.border }]}>
                             <ThemedText type="defaultSemiBold">Close</ThemedText>
                         </Pressable>
                     </View>
@@ -727,21 +469,6 @@ const styles = StyleSheet.create({
     outputText: {
         fontSize: 16,
         lineHeight: 24,
-    },
-    historyCard: {
-        borderWidth: 1,
-        borderRadius: 14,
-        padding: 12,
-        gap: 10,
-    },
-    historyItem: {
-        borderBottomWidth: 1,
-        paddingBottom: 8,
-        gap: 4,
-    },
-    historyLang: {
-        fontSize: 12,
-        fontWeight: '600',
     },
     modalOverlay: {
         flex: 1,
