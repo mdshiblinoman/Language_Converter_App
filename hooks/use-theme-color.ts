@@ -1,5 +1,5 @@
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Colors } from '../constants/theme';
+import { useColorScheme } from './use-color-scheme';
 
 type ThemeProps = {
     light?: string;
