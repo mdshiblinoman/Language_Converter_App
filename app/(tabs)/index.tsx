@@ -1,12 +1,12 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Modal,
     Pressable,
     ScrollView,
-    StyleSheet,
+    Text,
     TextInput,
-    useColorScheme,
     View,
 } from 'react-native';
 
@@ -20,39 +20,12 @@ import {
     chunkTextForTranslation,
     translateTextInChunks,
 } from '@/app/_lib/text-translation';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 
 type PickerType = 'source' | 'target' | null;
 
 const MAX_CHARS_PER_REQUEST = 450;
 
-const lightColors = {
-    bg: '#f4f7ff',
-    card: '#ffffff',
-    textMuted: '#5e6470',
-    border: '#d6deec',
-    accent: '#1060ff',
-    accentSoft: '#e6efff',
-    successSoft: '#e9f8ef',
-    successText: '#146c43',
-};
-
-const darkColors = {
-    bg: '#0d111a',
-    card: '#141b28',
-    textMuted: '#a9b2c7',
-    border: '#2a3345',
-    accent: '#6ea3ff',
-    accentSoft: '#1c2a44',
-    successSoft: '#163326',
-    successText: '#7fe2ae',
-};
-
 export default function HomeScreen() {
-    const scheme = useColorScheme();
-    const colors = scheme === 'dark' ? darkColors : lightColors;
-
     const [sourceLanguage, setSourceLanguage] = useState<Language>(SOURCE_LANGUAGES[0]);
     const [targetLanguage, setTargetLanguage] = useState<Language>(TARGET_LANGUAGES[0]);
     const [sourceText, setSourceText] = useState('');
@@ -194,128 +167,121 @@ export default function HomeScreen() {
     };
 
     return (
-        <ThemedView style={[styles.screen, { backgroundColor: colors.bg }]}>
-            <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-                <ThemedText type="title">Language Converter</ThemedText>
-                <ThemedText style={[styles.subtitle, { color: colors.textMuted }]}>
+        <View className="flex-1 bg-slate-100 dark:bg-slate-950">
+            <ScrollView
+                className="flex-1"
+                contentContainerClassName="gap-3.5 px-4 pb-10 pt-6"
+                keyboardShouldPersistTaps="handled">
+                <Text className="text-4xl font-bold leading-9 text-slate-900 dark:text-slate-50">
+                    Language Converter
+                </Text>
+                <Text className="-mt-1.5 mb-1.5 text-base text-slate-500 dark:text-slate-300">
                     Text, paragraph, and document translation
-                </ThemedText>
+                </Text>
 
-                <View style={styles.languageRow}>
+                <View className="flex-row items-stretch gap-2">
                     <Pressable
                         onPress={() => openPicker('source')}
-                        style={[
-                            styles.languageButton,
-                            { backgroundColor: colors.card, borderColor: colors.border },
-                        ]}>
-                        <ThemedText type="defaultSemiBold">From</ThemedText>
-                        <ThemedText>{sourceLanguage.name}</ThemedText>
-                        <ThemedText style={[styles.languageCode, { color: colors.textMuted }]}>
+                        className="flex-1 gap-0.5 rounded-2xl border border-amber-300 bg-amber-100 p-2.5 dark:border-amber-700 dark:bg-amber-950">
+                        <Text className="text-base font-semibold text-amber-900 dark:text-amber-200">From</Text>
+                        <Text className="text-base text-amber-900 dark:text-amber-200">{sourceLanguage.name}</Text>
+                        <Text className="text-xs text-amber-700 dark:text-amber-300">
                             {sourceLanguage.code}
-                        </ThemedText>
+                        </Text>
                     </Pressable>
 
                     <Pressable
                         onPress={handleSwap}
-                        style={[
-                            styles.swapButton,
-                            { backgroundColor: colors.accentSoft, borderColor: colors.border },
-                        ]}
+                        className="justify-center rounded-2xl border border-cyan-300 bg-cyan-100 px-3.5 dark:border-cyan-700 dark:bg-cyan-950"
                         accessibilityLabel="Swap languages">
-                        <ThemedText type="defaultSemiBold" style={{ color: colors.accent }}>
-                            Swap
-                        </ThemedText>
+                        <Text className="text-base font-semibold text-cyan-800 dark:text-cyan-300">Swap</Text>
                     </Pressable>
 
                     <Pressable
                         onPress={() => openPicker('target')}
-                        style={[
-                            styles.languageButton,
-                            { backgroundColor: colors.card, borderColor: colors.border },
-                        ]}>
-                        <ThemedText type="defaultSemiBold">To</ThemedText>
-                        <ThemedText>{targetLanguage.name}</ThemedText>
-                        <ThemedText style={[styles.languageCode, { color: colors.textMuted }]}>
+                        className="flex-1 gap-0.5 rounded-2xl border border-emerald-300 bg-emerald-100 p-2.5 dark:border-emerald-700 dark:bg-emerald-950">
+                        <Text className="text-base font-semibold text-emerald-900 dark:text-emerald-200">To</Text>
+                        <Text className="text-base text-emerald-900 dark:text-emerald-200">{targetLanguage.name}</Text>
+                        <Text className="text-xs text-emerald-700 dark:text-emerald-300">
                             {targetLanguage.code}
-                        </ThemedText>
+                        </Text>
                     </Pressable>
                 </View>
 
-                <View style={[styles.infoRow, { backgroundColor: colors.successSoft, borderColor: colors.border }]}>
-                    <ThemedText style={[styles.infoText, { color: colors.successText }]}>
+                <View className="rounded-xl border border-slate-300 bg-emerald-100 px-3 py-2 dark:border-slate-700 dark:bg-emerald-950">
+                    <Text className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
                         {`Characters: ${sourceText.length} | Chunks: ${chunkCount}`}
-                    </ThemedText>
+                    </Text>
                 </View>
 
-                <View style={[styles.inputCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                    <ThemedText type="defaultSemiBold">Input Text</ThemedText>
+                <View className="gap-2 rounded-2xl border border-slate-300 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+                    <Text className="text-base font-semibold text-slate-900 dark:text-slate-100">Input Text</Text>
                     <TextInput
                         placeholder="Type word, paragraph, or full document here..."
-                        placeholderTextColor={colors.textMuted}
+                        placeholderTextColor="#64748b"
                         value={sourceText}
                         onChangeText={setSourceText}
                         multiline
                         textAlignVertical="top"
-                        style={[styles.textArea, { color: scheme === 'dark' ? '#ffffff' : '#111111' }]}
+                        className="min-h-40 text-base leading-6 text-slate-900 dark:text-slate-100"
                     />
 
-                    <View style={styles.actionsRow}>
+                    <View className="flex-row justify-end gap-2">
                         <Pressable
                             onPress={isListening ? stopVoiceInput : startVoiceInput}
-                            style={[
-                                styles.secondaryButton,
-                                styles.voiceButton,
-                                {
-                                    borderColor: colors.border,
-                                    backgroundColor: isListening ? colors.accentSoft : 'transparent',
-                                },
-                            ]}>
-                            <ThemedText
-                                type="defaultSemiBold"
-                                style={{ color: isListening ? colors.accent : undefined }}>
-                                {isListening ? 'Stop Voice' : 'Voice Input'}
-                            </ThemedText>
+                            accessibilityLabel={isListening ? 'Stop voice input' : 'Start voice input'}
+                            className={`items-center justify-center rounded-lg border p-2.5 ${isListening
+                                    ? 'border-rose-300 bg-rose-100 dark:border-rose-700 dark:bg-rose-950'
+                                    : 'border-teal-300 bg-teal-100 dark:border-teal-700 dark:bg-teal-950'
+                                }`}>
+                            <Ionicons
+                                name={isListening ? 'stop-circle-outline' : 'mic-outline'}
+                                size={22}
+                                color={isListening ? '#be123c' : '#0f766e'}
+                            />
                         </Pressable>
-                        <Pressable onPress={handleClear} style={[styles.secondaryButton, { borderColor: colors.border }]}>
-                            <ThemedText type="defaultSemiBold">Clear</ThemedText>
+                        <Pressable
+                            onPress={handleClear}
+                            className="rounded-lg border border-orange-300 bg-orange-100 px-3 py-2 dark:border-orange-700 dark:bg-orange-950">
+                            <Text className="text-base font-semibold text-orange-900 dark:text-orange-200">Clear</Text>
                         </Pressable>
                     </View>
 
                     {interimTranscript ? (
-                        <ThemedText style={[styles.voiceHint, { color: colors.textMuted }]}>
+                        <Text className="text-sm font-medium text-slate-500 dark:text-slate-300">
                             {`Listening: ${interimTranscript}`}
-                        </ThemedText>
+                        </Text>
                     ) : null}
 
-                    {speechError ? <ThemedText style={styles.errorText}>{speechError}</ThemedText> : null}
+                    {speechError ? <Text className="font-semibold text-red-700">{speechError}</Text> : null}
                 </View>
 
                 <Pressable
                     onPress={handleTranslate}
                     disabled={isTranslating}
-                    style={[
-                        styles.translateButton,
-                        { backgroundColor: colors.accent, opacity: isTranslating ? 0.7 : 1 },
-                    ]}>
+                    className="min-h-12 items-center justify-center rounded-xl bg-violet-700 dark:bg-violet-500"
+                    style={{ opacity: isTranslating ? 0.7 : 1 }}>
                     {isTranslating ? (
-                        <View style={styles.loadingWrap}>
+                        <View className="flex-row items-center gap-2">
                             <ActivityIndicator color="#ffffff" />
-                            <ThemedText style={styles.translateButtonText}>
+                            <Text className="font-bold text-white">
                                 {progressTotal > 0 ? `Translating ${progressIndex}/${progressTotal}` : 'Translating'}
-                            </ThemedText>
+                            </Text>
                         </View>
                     ) : (
-                        <ThemedText style={styles.translateButtonText}>Translate</ThemedText>
+                        <Text className="font-bold text-white">Translate</Text>
                     )}
                 </Pressable>
 
-                {error ? <ThemedText style={styles.errorText}>{error}</ThemedText> : null}
+                {error ? <Text className="font-semibold text-red-700">{error}</Text> : null}
 
-                <View style={[styles.outputCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                    <ThemedText type="defaultSemiBold">Translated Text</ThemedText>
-                    <ThemedText style={[styles.outputText, { color: translatedText ? undefined : colors.textMuted }]}>
+                <View className="min-h-30 gap-2 rounded-2xl border border-slate-300 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+                    <Text className="text-base font-semibold text-slate-900 dark:text-slate-100">Translated Text</Text>
+                    <Text
+                        className={`text-base leading-6 ${translatedText ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-300'
+                            }`}>
                         {translatedText || 'Your translated result will appear here.'}
-                    </ThemedText>
+                    </Text>
                 </View>
             </ScrollView>
 
@@ -324,185 +290,37 @@ export default function HomeScreen() {
                 transparent
                 animationType="slide"
                 onRequestClose={() => setActivePicker(null)}>
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.modalSheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                        <ThemedText type="subtitle">Select Language</ThemedText>
+                <View className="flex-1 justify-end bg-black/35">
+                    <View className="max-h-[75%] gap-2.5 rounded-t-2xl border border-slate-300 bg-white p-3.5 dark:border-slate-700 dark:bg-slate-900">
+                        <Text className="text-xl font-bold text-slate-900 dark:text-slate-100">Select Language</Text>
                         <TextInput
                             value={searchText}
                             onChangeText={setSearchText}
                             placeholder="Search language..."
-                            placeholderTextColor={colors.textMuted}
-                            style={[
-                                styles.searchInput,
-                                {
-                                    borderColor: colors.border,
-                                    color: scheme === 'dark' ? '#ffffff' : '#111111',
-                                    backgroundColor: scheme === 'dark' ? '#0c1320' : '#f8faff',
-                                },
-                            ]}
+                            placeholderTextColor="#64748b"
+                            className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                         />
 
-                        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.listWrap}>
+                        <ScrollView keyboardShouldPersistTaps="handled" contentContainerClassName="pb-2.5">
                             {filteredLanguages.map((language) => (
                                 <Pressable
                                     key={language.code}
                                     onPress={() => handleSelectLanguage(language)}
-                                    style={[styles.languageItem, { borderBottomColor: colors.border }]}>
-                                    <ThemedText>{language.name}</ThemedText>
-                                    <ThemedText style={{ color: colors.textMuted }}>{language.code}</ThemedText>
+                                    className="flex-row items-center justify-between border-b border-slate-300 py-3 dark:border-slate-700">
+                                    <Text className="text-base text-slate-900 dark:text-slate-100">{language.name}</Text>
+                                    <Text className="text-base text-slate-500 dark:text-slate-300">{language.code}</Text>
                                 </Pressable>
                             ))}
                         </ScrollView>
 
                         <Pressable
                             onPress={() => setActivePicker(null)}
-                            style={[styles.closeButton, { borderColor: colors.border }]}>
-                            <ThemedText type="defaultSemiBold">Close</ThemedText>
+                            className="items-center rounded-xl border border-lime-300 bg-lime-100 py-2.5 dark:border-lime-700 dark:bg-lime-950">
+                            <Text className="text-base font-semibold text-lime-900 dark:text-lime-200">Close</Text>
                         </Pressable>
                     </View>
                 </View>
             </Modal>
-        </ThemedView>
+        </View>
     );
 }
-
-const styles = StyleSheet.create({
-    screen: {
-        flex: 1,
-    },
-    content: {
-        paddingHorizontal: 16,
-        paddingTop: 24,
-        paddingBottom: 40,
-        gap: 14,
-    },
-    subtitle: {
-        marginTop: -6,
-        marginBottom: 6,
-    },
-    languageRow: {
-        flexDirection: 'row',
-        gap: 8,
-        alignItems: 'stretch',
-    },
-    languageButton: {
-        flex: 1,
-        borderWidth: 1,
-        borderRadius: 14,
-        padding: 10,
-        gap: 2,
-    },
-    languageCode: {
-        fontSize: 12,
-    },
-    swapButton: {
-        borderWidth: 1,
-        borderRadius: 14,
-        justifyContent: 'center',
-        paddingHorizontal: 14,
-    },
-    infoRow: {
-        borderWidth: 1,
-        borderRadius: 10,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-    },
-    infoText: {
-        fontSize: 13,
-        fontWeight: '600',
-    },
-    inputCard: {
-        borderWidth: 1,
-        borderRadius: 14,
-        padding: 12,
-        gap: 8,
-    },
-    textArea: {
-        minHeight: 160,
-        fontSize: 16,
-        lineHeight: 22,
-    },
-    actionsRow: {
-        flexDirection: 'row',
-        gap: 8,
-        justifyContent: 'flex-end',
-    },
-    voiceButton: {
-        minWidth: 110,
-    },
-    voiceHint: {
-        fontSize: 13,
-        fontWeight: '500',
-    },
-    secondaryButton: {
-        borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-    },
-    translateButton: {
-        borderRadius: 12,
-        minHeight: 48,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    loadingWrap: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    translateButtonText: {
-        color: '#ffffff',
-        fontWeight: '700',
-    },
-    errorText: {
-        color: '#c62828',
-        fontWeight: '600',
-    },
-    outputCard: {
-        borderWidth: 1,
-        borderRadius: 14,
-        padding: 12,
-        gap: 8,
-        minHeight: 120,
-    },
-    outputText: {
-        fontSize: 16,
-        lineHeight: 24,
-    },
-    modalOverlay: {
-        flex: 1,
-        justifyContent: 'flex-end',
-        backgroundColor: 'rgba(0,0,0,0.35)',
-    },
-    modalSheet: {
-        borderTopLeftRadius: 18,
-        borderTopRightRadius: 18,
-        borderWidth: 1,
-        padding: 14,
-        maxHeight: '75%',
-        gap: 10,
-    },
-    searchInput: {
-        borderWidth: 1,
-        borderRadius: 10,
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-    },
-    listWrap: {
-        paddingBottom: 10,
-    },
-    languageItem: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderBottomWidth: 1,
-        paddingVertical: 12,
-    },
-    closeButton: {
-        borderWidth: 1,
-        borderRadius: 10,
-        paddingVertical: 10,
-        alignItems: 'center',
-    },
-});
