@@ -17,7 +17,6 @@ import {
     type Language,
 } from '@/app/_lib/languages';
 import {
-    chunkTextForTranslation,
     translateTextInChunks,
 } from '@/app/_lib/text-translation';
 
@@ -66,11 +65,6 @@ export default function HomeScreen() {
                 language.name.toLowerCase().includes(query) || language.code.toLowerCase().includes(query)
         );
     }, [pickerLanguages, searchText]);
-
-    const chunkCount = useMemo(
-        () => chunkTextForTranslation(sourceText, MAX_CHARS_PER_REQUEST).length,
-        [sourceText]
-    );
 
     const handleSelectLanguage = (language: Language) => {
         if (activePicker === 'source') {
@@ -208,12 +202,6 @@ export default function HomeScreen() {
                     </Pressable>
                 </View>
 
-                <View className="rounded-xl border border-slate-300 bg-emerald-100 px-3 py-2 dark:border-slate-700 dark:bg-emerald-950">
-                    <Text className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
-                        {`Characters: ${sourceText.length} | Chunks: ${chunkCount}`}
-                    </Text>
-                </View>
-
                 <View className="gap-2 rounded-2xl border border-slate-300 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
                     <Text className="text-base font-semibold text-slate-900 dark:text-slate-100">Input Text</Text>
                     <TextInput
@@ -231,8 +219,8 @@ export default function HomeScreen() {
                             onPress={isListening ? stopVoiceInput : startVoiceInput}
                             accessibilityLabel={isListening ? 'Stop voice input' : 'Start voice input'}
                             className={`items-center justify-center rounded-lg border p-2.5 ${isListening
-                                    ? 'border-rose-300 bg-rose-100 dark:border-rose-700 dark:bg-rose-950'
-                                    : 'border-teal-300 bg-teal-100 dark:border-teal-700 dark:bg-teal-950'
+                                ? 'border-rose-300 bg-rose-100 dark:border-rose-700 dark:bg-rose-950'
+                                : 'border-teal-300 bg-teal-100 dark:border-teal-700 dark:bg-teal-950'
                                 }`}>
                             <Ionicons
                                 name={isListening ? 'stop-circle-outline' : 'mic-outline'}
