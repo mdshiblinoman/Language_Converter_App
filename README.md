@@ -16,6 +16,22 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npx expo start
    ```
 
+## Firebase Authentication Setup
+
+1. Create a Firebase project in the Firebase Console.
+2. Enable `Authentication` and at least the `Email/Password` sign-in provider.
+3. Copy `.env.example` to `.env` and fill in your Firebase web config values.
+4. Restart Expo after updating `.env` so the `EXPO_PUBLIC_*` values are loaded.
+
+Required environment variables:
+
+- `EXPO_PUBLIC_FIREBASE_API_KEY`
+- `EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN`
+- `EXPO_PUBLIC_FIREBASE_PROJECT_ID`
+- `EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET`
+- `EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
+- `EXPO_PUBLIC_FIREBASE_APP_ID`
+
 In the output, you'll find options to open the app in a
 
 - [development build](https://docs.expo.dev/develop/development-builds/introduction/)

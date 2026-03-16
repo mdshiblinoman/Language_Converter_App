@@ -1,4 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
+import {
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    signOut,
+} from 'firebase/auth';
 import { useCallback, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
@@ -10,6 +15,7 @@ import {
     View,
 } from 'react-native';
 
+import { useAuth } from '@/app/_hooks/use-auth';
 import { useVoiceInput } from '@/app/_hooks/use-voice-input';
 import {
     SOURCE_LANGUAGES,
@@ -19,12 +25,21 @@ import {
 import {
     translateTextInChunks,
 } from '@/app/_lib/text-translation';
+import { auth } from '@/services/firebase';
 
 type PickerType = 'source' | 'target' | null;
 
 const MAX_CHARS_PER_REQUEST = 450;
 
 export default function HomeScreen() {
+    const { user, isAuthLoading } = useAuth();
+
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+    const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
+    const [authError, setAuthError] = useState('');
+
     const [sourceLanguage, setSourceLanguage] = useState<Language>(SOURCE_LANGUAGES[0]);
     const [targetLanguage, setTargetLanguage] = useState<Language>(TARGET_LANGUAGES[0]);
     const [sourceText, setSourceText] = useState('');
@@ -160,6 +175,109 @@ export default function HomeScreen() {
         setActivePicker(type);
     };
 
+    const handleAuthSubmit = async () => {
+        const normalizedEmail = email.trim().toLowerCase();
+
+        if (!normalizedEmail || !password) {
+            setAuthError('Please enter both email and password.');
+            return;
+        }
+
+        setAuthError('');
+        setIsAuthSubmitting(true);
+
+        try {
+            if (isCreatingAccount) {
+                await createUserWithEmailAndPassword(auth, normalizedEmail, password);
+            } else {
+                await signInWithEmailAndPassword(auth, normalizedEmail, password);
+            }
+            setPassword('');
+        } catch (requestError) {
+            console.error(requestError);
+            setAuthError('Authentication failed. Check your credentials and try again.');
+        } finally {
+            setIsAuthSubmitting(false);
+        }
+    };
+
+    const handleSignOut = async () => {
+        try {
+            await signOut(auth);
+        } catch (requestError) {
+            console.error(requestError);
+            setError('Unable to sign out right now. Please try again.');
+        }
+    };
+
+    if (isAuthLoading) {
+        return (
+            <View className="flex-1 items-center justify-center bg-slate-100 dark:bg-slate-950">
+                <ActivityIndicator size="large" color="#334155" />
+                <Text className="mt-3 text-base text-slate-600 dark:text-slate-300">Checking session...</Text>
+            </View>
+        );
+    }
+
+    if (!user) {
+        return (
+            <View className="flex-1 bg-slate-100 px-4 pt-8 dark:bg-slate-950">
+                <View className="gap-3 rounded-2xl border border-slate-300 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                    <Text className="text-3xl font-bold text-slate-900 dark:text-slate-50">Welcome</Text>
+                    <Text className="text-base text-slate-600 dark:text-slate-300">
+                        Sign in to use Language Converter.
+                    </Text>
+
+                    <TextInput
+                        value={email}
+                        onChangeText={setEmail}
+                        autoCapitalize="none"
+                        keyboardType="email-address"
+                        placeholder="Email"
+                        placeholderTextColor="#64748b"
+                        className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                    />
+
+                    <TextInput
+                        value={password}
+                        onChangeText={setPassword}
+                        secureTextEntry
+                        placeholder="Password"
+                        placeholderTextColor="#64748b"
+                        className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                    />
+
+                    <Pressable
+                        onPress={handleAuthSubmit}
+                        disabled={isAuthSubmitting}
+                        className="min-h-12 items-center justify-center rounded-xl bg-violet-700 dark:bg-violet-500"
+                        style={{ opacity: isAuthSubmitting ? 0.7 : 1 }}>
+                        {isAuthSubmitting ? (
+                            <ActivityIndicator color="#ffffff" />
+                        ) : (
+                            <Text className="font-bold text-white">
+                                {isCreatingAccount ? 'Create Account' : 'Sign In'}
+                            </Text>
+                        )}
+                    </Pressable>
+
+                    <Pressable
+                        onPress={() => {
+                            setIsCreatingAccount((prev) => !prev);
+                            setAuthError('');
+                        }}
+                        className="items-center rounded-xl border border-slate-300 bg-slate-100 py-2.5 dark:border-slate-700 dark:bg-slate-950">
+                        <Text className="font-semibold text-slate-900 dark:text-slate-200">
+                            {isCreatingAccount ? 'Already have an account? Sign In' : "Don't have an account? Create one"}
+                        </Text>
+                    </Pressable>
+
+                    {authError ? <Text className="font-semibold text-red-700">{authError}</Text> : null}
+                </View>
+            </View>
+        );
+    }
+
     return (
         <View className="flex-1 bg-slate-100 dark:bg-slate-950">
             <ScrollView
@@ -172,6 +290,17 @@ export default function HomeScreen() {
                 <Text className="-mt-1.5 mb-1.5 text-base text-slate-500 dark:text-slate-300">
                     Text, paragraph, and document translation
                 </Text>
+
+                <View className="-mt-1 mb-1.5 flex-row items-center justify-between rounded-xl border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900">
+                    <Text className="flex-1 pr-3 text-sm text-slate-600 dark:text-slate-300" numberOfLines={1}>
+                        Signed in as {user.email ?? 'user'}
+                    </Text>
+                    <Pressable
+                        onPress={handleSignOut}
+                        className="rounded-lg border border-rose-300 bg-rose-100 px-3 py-1.5 dark:border-rose-700 dark:bg-rose-950">
+                        <Text className="font-semibold text-rose-900 dark:text-rose-200">Sign Out</Text>
+                    </Pressable>
+                </View>
 
                 <View className="flex-row items-stretch gap-2">
                     <Pressable
