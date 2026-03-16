@@ -15,18 +15,18 @@ import {
     View,
 } from 'react-native';
 
-import { SignInForm } from '@/app/_components/auth/sign-in-form';
-import { SignUpForm } from '@/app/_components/auth/sign-up-form';
-import { useAuth } from '@/app/_hooks/use-auth';
-import { useVoiceInput } from '@/app/_hooks/use-voice-input';
+import { SignInForm } from '@/components/auth/sign-in-form';
+import { SignUpForm } from '@/components/auth/sign-up-form';
+import { useAuth } from '@/hooks/use-auth';
+import { useVoiceInput } from '@/hooks/use-voice-input';
 import {
     SOURCE_LANGUAGES,
     TARGET_LANGUAGES,
     type Language,
-} from '@/app/_lib/languages';
+} from '@/lib/languages';
 import {
     translateTextInChunks,
-} from '@/app/_lib/text-translation';
+} from '@/lib/text-translation';
 import { auth } from '@/services/firebase';
 
 type PickerType = 'source' | 'target' | null;

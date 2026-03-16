@@ -4,7 +4,7 @@ import {
 } from 'expo-speech-recognition';
 import { useState } from 'react';
 
-import { SPEECH_LOCALE_BY_CODE } from '@/app/_lib/languages';
+import { SPEECH_LOCALE_BY_CODE } from '@/lib/languages';
 
 type UseVoiceInputParams = {
     sourceLanguageCode: string;

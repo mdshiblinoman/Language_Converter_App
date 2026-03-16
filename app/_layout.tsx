@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'react-native';
 import 'react-native-reanimated';
 
-import { AuthProvider } from '@/app/_hooks/use-auth';
+import { AuthProvider } from '@/hooks/use-auth';
 
 import '../global.css';
 
