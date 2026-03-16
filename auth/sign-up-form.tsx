@@ -1,23 +1,35 @@
 import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
 
 type SignUpFormProps = {
+    name: string;
+    phoneNumber: string;
     email: string;
     password: string;
+    confirmPassword: string;
     isSubmitting: boolean;
     authError: string;
+    onNameChange: (value: string) => void;
+    onPhoneNumberChange: (value: string) => void;
     onEmailChange: (value: string) => void;
     onPasswordChange: (value: string) => void;
+    onConfirmPasswordChange: (value: string) => void;
     onSubmit: () => void;
     onSwitchToSignIn: () => void;
 };
 
 export function SignUpForm({
+    name,
+    phoneNumber,
     email,
     password,
+    confirmPassword,
     isSubmitting,
     authError,
+    onNameChange,
+    onPhoneNumberChange,
     onEmailChange,
     onPasswordChange,
+    onConfirmPasswordChange,
     onSubmit,
     onSwitchToSignIn,
 }: SignUpFormProps) {
@@ -29,11 +41,38 @@ export function SignUpForm({
             </Text>
 
             <TextInput
+                value={name}
+                onChangeText={onNameChange}
+                autoCapitalize="words"
+                placeholder="Name"
+                placeholderTextColor="#64748b"
+                className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            />
+
+            <TextInput
+                value={phoneNumber}
+                onChangeText={onPhoneNumberChange}
+                keyboardType="phone-pad"
+                placeholder="Phone Number"
+                placeholderTextColor="#64748b"
+                className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            />
+
+            <TextInput
                 value={email}
                 onChangeText={onEmailChange}
                 autoCapitalize="none"
                 keyboardType="email-address"
                 placeholder="Email"
+                placeholderTextColor="#64748b"
+                className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            />
+
+            <TextInput
+                value={confirmPassword}
+                onChangeText={onConfirmPasswordChange}
+                secureTextEntry
+                placeholder="Confirm Password"
                 placeholderTextColor="#64748b"
                 className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
             />

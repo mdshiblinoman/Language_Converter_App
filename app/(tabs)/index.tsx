@@ -3,6 +3,7 @@ import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     signOut,
+    updateProfile,
 } from 'firebase/auth';
 import { useCallback, useMemo, useState } from 'react';
 import {
@@ -15,8 +16,8 @@ import {
     View,
 } from 'react-native';
 
-import { SignInForm } from '@/components/auth/sign-in-form';
-import { SignUpForm } from '@/components/auth/sign-up-form';
+import { SignInForm } from '@/auth/sign-in-form';
+import { SignUpForm } from '@/auth/sign-up-form';
 import { useAuth } from '@/hooks/use-auth';
 import { useVoiceInput } from '@/hooks/use-voice-input';
 import {
@@ -38,6 +39,9 @@ export default function HomeScreen() {
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [fullName, setFullName] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
     const [authMode, setAuthMode] = useState<'sign-in' | 'sign-up'>('sign-in');
     const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
     const [authError, setAuthError] = useState('');
@@ -200,10 +204,28 @@ export default function HomeScreen() {
     };
 
     const handleSignUp = async () => {
+        const normalizedName = fullName.trim();
+        const normalizedPhone = phoneNumber.trim();
         const normalizedEmail = email.trim().toLowerCase();
 
-        if (!normalizedEmail || !password) {
-            setAuthError('Please enter both email and password.');
+        if (!normalizedName || !normalizedPhone || !normalizedEmail || !password || !confirmPassword) {
+            setAuthError('Please fill name, phone number, email, password, and confirm password.');
+            return;
+        }
+
+        const phoneDigits = normalizedPhone.replace(/\D/g, '');
+        if (phoneDigits.length < 8) {
+            setAuthError('Please enter a valid phone number.');
+            return;
+        }
+
+        if (password.length < 6) {
+            setAuthError('Password must be at least 6 characters.');
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            setAuthError('Password and confirm password do not match.');
             return;
         }
 
@@ -211,8 +233,10 @@ export default function HomeScreen() {
         setIsAuthSubmitting(true);
 
         try {
-            await createUserWithEmailAndPassword(auth, normalizedEmail, password);
+            const credential = await createUserWithEmailAndPassword(auth, normalizedEmail, password);
+            await updateProfile(credential.user, { displayName: normalizedName });
             setPassword('');
+            setConfirmPassword('');
         } catch (requestError) {
             console.error(requestError);
             setAuthError('Authentication failed. Check your credentials and try again.');
@@ -258,12 +282,18 @@ export default function HomeScreen() {
                     />
                 ) : (
                     <SignUpForm
+                        name={fullName}
+                        phoneNumber={phoneNumber}
                         email={email}
                         password={password}
+                        confirmPassword={confirmPassword}
                         isSubmitting={isAuthSubmitting}
                         authError={authError}
+                        onNameChange={setFullName}
+                        onPhoneNumberChange={setPhoneNumber}
                         onEmailChange={setEmail}
                         onPasswordChange={setPassword}
+                        onConfirmPasswordChange={setConfirmPassword}
                         onSubmit={handleSignUp}
                         onSwitchToSignIn={() => {
                             setAuthMode('sign-in');
