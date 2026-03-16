@@ -32,6 +32,41 @@ Required environment variables:
 - `EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
 - `EXPO_PUBLIC_FIREBASE_APP_ID`
 
+## Twilio Phone OTP Setup
+
+This app now supports phone verification in Sign Up using Twilio Verify.
+
+1. Create a Twilio Verify Service and copy:
+
+- `TWILIO_ACCOUNT_SID`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_VERIFY_SERVICE_SID`
+
+2. Setup OTP server:
+
+```bash
+cd server
+npm install
+cp .env.example .env
+```
+
+3. Fill `server/.env` with your Twilio credentials.
+
+4. Run OTP server:
+
+```bash
+cd server
+npm run start
+```
+
+5. Set app API URL in root `.env`:
+
+```bash
+EXPO_PUBLIC_OTP_API_URL=http://<your-local-ip>:4000
+```
+
+Use your machine LAN IP (not `localhost`) when testing on a physical phone.
+
 In the output, you'll find options to open the app in a
 
 - [development build](https://docs.expo.dev/develop/development-builds/introduction/)

@@ -7,12 +7,19 @@ type SignUpFormProps = {
     password: string;
     confirmPassword: string;
     isSubmitting: boolean;
+    isOtpLoading: boolean;
+    isOtpSent: boolean;
+    isPhoneVerified: boolean;
     authError: string;
+    otpCode: string;
     onNameChange: (value: string) => void;
     onPhoneNumberChange: (value: string) => void;
     onEmailChange: (value: string) => void;
     onPasswordChange: (value: string) => void;
     onConfirmPasswordChange: (value: string) => void;
+    onOtpCodeChange: (value: string) => void;
+    onSendOtp: () => void;
+    onVerifyOtp: () => void;
     onSubmit: () => void;
     onSwitchToSignIn: () => void;
 };
@@ -24,12 +31,19 @@ export function SignUpForm({
     password,
     confirmPassword,
     isSubmitting,
+    isOtpLoading,
+    isOtpSent,
+    isPhoneVerified,
     authError,
+    otpCode,
     onNameChange,
     onPhoneNumberChange,
     onEmailChange,
     onPasswordChange,
     onConfirmPasswordChange,
+    onOtpCodeChange,
+    onSendOtp,
+    onVerifyOtp,
     onSubmit,
     onSwitchToSignIn,
 }: SignUpFormProps) {
@@ -53,10 +67,47 @@ export function SignUpForm({
                 value={phoneNumber}
                 onChangeText={onPhoneNumberChange}
                 keyboardType="phone-pad"
-                placeholder="Phone Number"
+                placeholder="Phone Number (+8801...)"
                 placeholderTextColor="#64748b"
                 className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
             />
+
+            <Pressable
+                onPress={onSendOtp}
+                disabled={isOtpLoading}
+                className="min-h-11 items-center justify-center rounded-xl border border-sky-300 bg-sky-100 dark:border-sky-700 dark:bg-sky-950"
+                style={{ opacity: isOtpLoading ? 0.7 : 1 }}>
+                {isOtpLoading ? (
+                    <ActivityIndicator color="#0c4a6e" />
+                ) : (
+                    <Text className="font-semibold text-sky-900 dark:text-sky-200">
+                        {isOtpSent ? 'Resend Code' : 'Send Code'}
+                    </Text>
+                )}
+            </Pressable>
+
+            {isOtpSent ? (
+                <View className="gap-2">
+                    <TextInput
+                        value={otpCode}
+                        onChangeText={onOtpCodeChange}
+                        keyboardType="number-pad"
+                        placeholder="Enter 6-digit code"
+                        placeholderTextColor="#64748b"
+                        className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                    />
+
+                    <Pressable
+                        onPress={onVerifyOtp}
+                        disabled={isOtpLoading || isPhoneVerified}
+                        className="min-h-11 items-center justify-center rounded-xl border border-emerald-300 bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-950"
+                        style={{ opacity: isOtpLoading || isPhoneVerified ? 0.7 : 1 }}>
+                        <Text className="font-semibold text-emerald-900 dark:text-emerald-200">
+                            {isPhoneVerified ? 'Phone Verified' : 'Verify Code'}
+                        </Text>
+                    </Pressable>
+                </View>
+            ) : null}
 
             <TextInput
                 value={email}
@@ -88,9 +139,9 @@ export function SignUpForm({
 
             <Pressable
                 onPress={onSubmit}
-                disabled={isSubmitting}
+                disabled={isSubmitting || !isPhoneVerified}
                 className="min-h-12 items-center justify-center rounded-xl bg-violet-700 dark:bg-violet-500"
-                style={{ opacity: isSubmitting ? 0.7 : 1 }}>
+                style={{ opacity: isSubmitting || !isPhoneVerified ? 0.7 : 1 }}>
                 {isSubmitting ? (
                     <ActivityIndicator color="#ffffff" />
                 ) : (

@@ -29,10 +29,12 @@ import {
     translateTextInChunks,
 } from '@/lib/text-translation';
 import { auth } from '@/services/firebase';
+import { sendOtpCode, verifyOtpCode } from '@/services/twilio-otp';
 
 type PickerType = 'source' | 'target' | null;
 
 const MAX_CHARS_PER_REQUEST = 450;
+const E164_PHONE_REGEX = /^\+[1-9]\d{7,14}$/;
 
 export default function HomeScreen() {
     const { user, isAuthLoading } = useAuth();
@@ -42,6 +44,10 @@ export default function HomeScreen() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [fullName, setFullName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
+    const [otpCode, setOtpCode] = useState('');
+    const [isOtpLoading, setIsOtpLoading] = useState(false);
+    const [isOtpSent, setIsOtpSent] = useState(false);
+    const [isPhoneVerified, setIsPhoneVerified] = useState(false);
     const [authMode, setAuthMode] = useState<'sign-in' | 'sign-up'>('sign-in');
     const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
     const [authError, setAuthError] = useState('');
@@ -219,6 +225,11 @@ export default function HomeScreen() {
             return;
         }
 
+        if (!E164_PHONE_REGEX.test(normalizedPhone)) {
+            setAuthError('Use phone format like +8801XXXXXXXXX');
+            return;
+        }
+
         if (password.length < 6) {
             setAuthError('Password must be at least 6 characters.');
             return;
@@ -226,6 +237,11 @@ export default function HomeScreen() {
 
         if (password !== confirmPassword) {
             setAuthError('Password and confirm password do not match.');
+            return;
+        }
+
+        if (!isPhoneVerified) {
+            setAuthError('Please verify your phone number first.');
             return;
         }
 
@@ -237,11 +253,76 @@ export default function HomeScreen() {
             await updateProfile(credential.user, { displayName: normalizedName });
             setPassword('');
             setConfirmPassword('');
+            setOtpCode('');
         } catch (requestError) {
             console.error(requestError);
             setAuthError('Authentication failed. Check your credentials and try again.');
         } finally {
             setIsAuthSubmitting(false);
+        }
+    };
+
+    const handleSendOtp = async () => {
+        const normalizedPhone = phoneNumber.trim();
+        const phoneDigits = normalizedPhone.replace(/\D/g, '');
+
+        if (!normalizedPhone || phoneDigits.length < 8) {
+            setAuthError('Please enter a valid phone number before requesting code.');
+            return;
+        }
+
+        if (!E164_PHONE_REGEX.test(normalizedPhone)) {
+            setAuthError('Use phone format like +8801XXXXXXXXX');
+            return;
+        }
+
+        setAuthError('');
+        setIsOtpLoading(true);
+
+        try {
+            await sendOtpCode(normalizedPhone);
+            setIsOtpSent(true);
+            setIsPhoneVerified(false);
+        } catch (requestError) {
+            console.error(requestError);
+            setAuthError('Could not send OTP. Check API URL/server and try again.');
+        } finally {
+            setIsOtpLoading(false);
+        }
+    };
+
+    const handleVerifyOtp = async () => {
+        const normalizedPhone = phoneNumber.trim();
+        const normalizedOtp = otpCode.trim();
+
+        if (!isOtpSent) {
+            setAuthError('Please send code first.');
+            return;
+        }
+
+        if (normalizedOtp.length < 4) {
+            setAuthError('Please enter the OTP code.');
+            return;
+        }
+
+        setAuthError('');
+        setIsOtpLoading(true);
+
+        try {
+            const result = await verifyOtpCode(normalizedPhone, normalizedOtp);
+            if (result.success) {
+                setIsPhoneVerified(true);
+                setAuthError('');
+            } else {
+                setIsPhoneVerified(false);
+                setAuthError('Invalid OTP code. Please try again.');
+            }
+        } catch (requestError) {
+            console.error(requestError);
+            setIsPhoneVerified(false);
+            setAuthError('Could not verify OTP. Try again.');
+        } finally {
+            setIsOtpLoading(false);
         }
     };
 
@@ -278,6 +359,9 @@ export default function HomeScreen() {
                         onSwitchToSignUp={() => {
                             setAuthMode('sign-up');
                             setAuthError('');
+                            setOtpCode('');
+                            setIsOtpSent(false);
+                            setIsPhoneVerified(false);
                         }}
                     />
                 ) : (
@@ -288,16 +372,31 @@ export default function HomeScreen() {
                         password={password}
                         confirmPassword={confirmPassword}
                         isSubmitting={isAuthSubmitting}
+                        isOtpLoading={isOtpLoading}
+                        isOtpSent={isOtpSent}
+                        isPhoneVerified={isPhoneVerified}
                         authError={authError}
+                        otpCode={otpCode}
                         onNameChange={setFullName}
-                        onPhoneNumberChange={setPhoneNumber}
+                        onPhoneNumberChange={(value) => {
+                            setPhoneNumber(value);
+                            setIsOtpSent(false);
+                            setOtpCode('');
+                            setIsPhoneVerified(false);
+                        }}
                         onEmailChange={setEmail}
                         onPasswordChange={setPassword}
                         onConfirmPasswordChange={setConfirmPassword}
+                        onOtpCodeChange={setOtpCode}
+                        onSendOtp={handleSendOtp}
+                        onVerifyOtp={handleVerifyOtp}
                         onSubmit={handleSignUp}
                         onSwitchToSignIn={() => {
                             setAuthMode('sign-in');
                             setAuthError('');
+                            setOtpCode('');
+                            setIsOtpSent(false);
+                            setIsPhoneVerified(false);
                         }}
                     />
                 )}
