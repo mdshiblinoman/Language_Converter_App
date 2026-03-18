@@ -265,43 +265,48 @@ export default function HomeScreen() {
 
     if (!user) {
         return (
-            <View className="flex-1 bg-slate-100 px-4 pt-8 dark:bg-slate-950">
-                {authMode === 'sign-in' ? (
-                    <SignInForm
-                        email={email}
-                        password={password}
-                        isSubmitting={isAuthSubmitting}
-                        authError={authError}
-                        onEmailChange={setEmail}
-                        onPasswordChange={setPassword}
-                        onSubmit={handleSignIn}
-                        onSwitchToSignUp={() => {
-                            setAuthMode('sign-up');
-                            setAuthError('');
-                        }}
-                    />
-                ) : (
-                    <SignUpForm
-                        name={fullName}
-                        phoneNumber={phoneNumber}
-                        email={email}
-                        password={password}
-                        confirmPassword={confirmPassword}
-                        isSubmitting={isAuthSubmitting}
-                        authError={authError}
-                        onNameChange={setFullName}
-                        onPhoneNumberChange={setPhoneNumber}
-                        onEmailChange={setEmail}
-                        onPasswordChange={setPassword}
-                        onConfirmPasswordChange={setConfirmPassword}
-                        onSubmit={handleSignUp}
-                        onSwitchToSignIn={() => {
-                            setAuthMode('sign-in');
-                            setAuthError('');
-                        }}
-                    />
-                )}
-            </View>
+            <ScrollView
+                className="flex-1 bg-cyan-50 dark:bg-slate-950"
+                contentContainerClassName="flex-grow justify-center px-4 py-8"
+                keyboardShouldPersistTaps="handled">
+                <View className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                    {authMode === 'sign-in' ? (
+                        <SignInForm
+                            email={email}
+                            password={password}
+                            isSubmitting={isAuthSubmitting}
+                            authError={authError}
+                            onEmailChange={setEmail}
+                            onPasswordChange={setPassword}
+                            onSubmit={handleSignIn}
+                            onSwitchToSignUp={() => {
+                                setAuthMode('sign-up');
+                                setAuthError('');
+                            }}
+                        />
+                    ) : (
+                        <SignUpForm
+                            name={fullName}
+                            phoneNumber={phoneNumber}
+                            email={email}
+                            password={password}
+                            confirmPassword={confirmPassword}
+                            isSubmitting={isAuthSubmitting}
+                            authError={authError}
+                            onNameChange={setFullName}
+                            onPhoneNumberChange={setPhoneNumber}
+                            onEmailChange={setEmail}
+                            onPasswordChange={setPassword}
+                            onConfirmPasswordChange={setConfirmPassword}
+                            onSubmit={handleSignUp}
+                            onSwitchToSignIn={() => {
+                                setAuthMode('sign-in');
+                                setAuthError('');
+                            }}
+                        />
+                    )}
+                </View>
+            </ScrollView>
         );
     }
 

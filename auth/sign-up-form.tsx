@@ -39,82 +39,84 @@ export function SignUpForm({
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     return (
-        <View className="gap-3 rounded-2xl border border-slate-300 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+        <View className="gap-4">
             <Text className="text-3xl font-bold text-slate-900 dark:text-slate-50">Create Account</Text>
             <Text className="text-base text-slate-600 dark:text-slate-300">
                 Sign up to start using Language Converter.
             </Text>
 
-            <TextInput
-                value={name}
-                onChangeText={onNameChange}
-                autoCapitalize="words"
-                placeholder="Name"
-                placeholderTextColor="#64748b"
-                className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-            />
-
-            <TextInput
-                value={phoneNumber}
-                onChangeText={onPhoneNumberChange}
-                keyboardType="phone-pad"
-                placeholder="Phone Number"
-                placeholderTextColor="#64748b"
-                className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-            />
-
-            <TextInput
-                value={email}
-                onChangeText={onEmailChange}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                placeholder="Email"
-                placeholderTextColor="#64748b"
-                className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-            />
-
-            <View className="flex-row items-center rounded-xl border border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-950">
+            <View className="gap-3">
                 <TextInput
-                    value={confirmPassword}
-                    onChangeText={onConfirmPasswordChange}
-                    secureTextEntry={!showConfirmPassword}
-                    placeholder="Confirm Password"
+                    value={name}
+                    onChangeText={onNameChange}
+                    autoCapitalize="words"
+                    placeholder="Name"
                     placeholderTextColor="#64748b"
-                    className="flex-1 px-3 py-2.5 text-slate-900 dark:text-slate-100"
+                    className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                 />
-                <Pressable
-                    onPress={() => setShowConfirmPassword((prev) => !prev)}
-                    accessibilityRole="button"
-                    accessibilityLabel={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
-                    className="px-3 py-2">
-                    <Ionicons
-                        name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
-                        size={20}
-                        color="#64748b"
-                    />
-                </Pressable>
-            </View>
 
-            <View className="flex-row items-center rounded-xl border border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-950">
                 <TextInput
-                    value={password}
-                    onChangeText={onPasswordChange}
-                    secureTextEntry={!showPassword}
-                    placeholder="Password"
+                    value={phoneNumber}
+                    onChangeText={onPhoneNumberChange}
+                    keyboardType="phone-pad"
+                    placeholder="Phone Number"
                     placeholderTextColor="#64748b"
-                    className="flex-1 px-3 py-2.5 text-slate-900 dark:text-slate-100"
+                    className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                 />
-                <Pressable
-                    onPress={() => setShowPassword((prev) => !prev)}
-                    accessibilityRole="button"
-                    accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
-                    className="px-3 py-2">
-                    <Ionicons
-                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                        size={20}
-                        color="#64748b"
+
+                <TextInput
+                    value={email}
+                    onChangeText={onEmailChange}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    placeholder="Email"
+                    placeholderTextColor="#64748b"
+                    className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                />
+
+                <View className="flex-row items-center rounded-xl border border-slate-300 bg-slate-50 pr-1 dark:border-slate-700 dark:bg-slate-950">
+                    <TextInput
+                        value={confirmPassword}
+                        onChangeText={onConfirmPasswordChange}
+                        secureTextEntry={!showConfirmPassword}
+                        placeholder="Confirm Password"
+                        placeholderTextColor="#64748b"
+                        className="flex-1 px-4 py-3 text-slate-900 dark:text-slate-100"
                     />
-                </Pressable>
+                    <Pressable
+                        onPress={() => setShowConfirmPassword((prev) => !prev)}
+                        accessibilityRole="button"
+                        accessibilityLabel={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                        className="px-3 py-2.5">
+                        <Ionicons
+                            name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
+                            size={20}
+                            color="#64748b"
+                        />
+                    </Pressable>
+                </View>
+
+                <View className="flex-row items-center rounded-xl border border-slate-300 bg-slate-50 pr-1 dark:border-slate-700 dark:bg-slate-950">
+                    <TextInput
+                        value={password}
+                        onChangeText={onPasswordChange}
+                        secureTextEntry={!showPassword}
+                        placeholder="Password"
+                        placeholderTextColor="#64748b"
+                        className="flex-1 px-4 py-3 text-slate-900 dark:text-slate-100"
+                    />
+                    <Pressable
+                        onPress={() => setShowPassword((prev) => !prev)}
+                        accessibilityRole="button"
+                        accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                        className="px-3 py-2.5">
+                        <Ionicons
+                            name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                            size={20}
+                            color="#64748b"
+                        />
+                    </Pressable>
+                </View>
             </View>
 
             <Pressable
