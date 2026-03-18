@@ -1,3 +1,5 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
 import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
 
 type SignUpFormProps = {
@@ -33,6 +35,9 @@ export function SignUpForm({
     onSubmit,
     onSwitchToSignIn,
 }: SignUpFormProps) {
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
     return (
         <View className="gap-3 rounded-2xl border border-slate-300 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
             <Text className="text-3xl font-bold text-slate-900 dark:text-slate-50">Create Account</Text>
@@ -68,23 +73,49 @@ export function SignUpForm({
                 className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
             />
 
-            <TextInput
-                value={confirmPassword}
-                onChangeText={onConfirmPasswordChange}
-                secureTextEntry
-                placeholder="Confirm Password"
-                placeholderTextColor="#64748b"
-                className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-            />
+            <View className="flex-row items-center rounded-xl border border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-950">
+                <TextInput
+                    value={confirmPassword}
+                    onChangeText={onConfirmPasswordChange}
+                    secureTextEntry={!showConfirmPassword}
+                    placeholder="Confirm Password"
+                    placeholderTextColor="#64748b"
+                    className="flex-1 px-3 py-2.5 text-slate-900 dark:text-slate-100"
+                />
+                <Pressable
+                    onPress={() => setShowConfirmPassword((prev) => !prev)}
+                    accessibilityRole="button"
+                    accessibilityLabel={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                    className="px-3 py-2">
+                    <Ionicons
+                        name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
+                        size={20}
+                        color="#64748b"
+                    />
+                </Pressable>
+            </View>
 
-            <TextInput
-                value={password}
-                onChangeText={onPasswordChange}
-                secureTextEntry
-                placeholder="Password"
-                placeholderTextColor="#64748b"
-                className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-            />
+            <View className="flex-row items-center rounded-xl border border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-950">
+                <TextInput
+                    value={password}
+                    onChangeText={onPasswordChange}
+                    secureTextEntry={!showPassword}
+                    placeholder="Password"
+                    placeholderTextColor="#64748b"
+                    className="flex-1 px-3 py-2.5 text-slate-900 dark:text-slate-100"
+                />
+                <Pressable
+                    onPress={() => setShowPassword((prev) => !prev)}
+                    accessibilityRole="button"
+                    accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                    className="px-3 py-2">
+                    <Ionicons
+                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                        size={20}
+                        color="#64748b"
+                    />
+                </Pressable>
+            </View>
 
             <Pressable
                 onPress={onSubmit}
