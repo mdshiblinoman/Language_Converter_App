@@ -52,7 +52,7 @@ export function SignUpForm({
                     autoCapitalize="words"
                     placeholder="Name"
                     placeholderTextColor="#64748b"
-                    className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                    className="mb-3 rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                 />
 
                 <TextInput
@@ -61,7 +61,7 @@ export function SignUpForm({
                     keyboardType="phone-pad"
                     placeholder="Phone Number"
                     placeholderTextColor="#64748b"
-                    className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                    className="mb-3 rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                 />
 
                 <TextInput
@@ -71,8 +71,30 @@ export function SignUpForm({
                     keyboardType="email-address"
                     placeholder="Email"
                     placeholderTextColor="#64748b"
-                    className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                    className="mb-3 rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                 />
+
+                <View className="mb-3 flex-row items-center rounded-xl border border-slate-300 bg-slate-50 pr-1 dark:border-slate-700 dark:bg-slate-950">
+                    <TextInput
+                        value={password}
+                        onChangeText={onPasswordChange}
+                        secureTextEntry={!showPassword}
+                        placeholder="Password"
+                        placeholderTextColor="#64748b"
+                        className="flex-1 px-4 py-3 text-slate-900 dark:text-slate-100"
+                    />
+                    <Pressable
+                        onPress={() => setShowPassword((prev) => !prev)}
+                        accessibilityRole="button"
+                        accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                        className="px-3 py-2.5">
+                        <Ionicons
+                            name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                            size={20}
+                            color="#64748b"
+                        />
+                    </Pressable>
+                </View>
 
                 <View className="flex-row items-center rounded-xl border border-slate-300 bg-slate-50 pr-1 dark:border-slate-700 dark:bg-slate-950">
                     <TextInput
@@ -90,28 +112,6 @@ export function SignUpForm({
                         className="px-3 py-2.5">
                         <Ionicons
                             name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
-                            size={20}
-                            color="#64748b"
-                        />
-                    </Pressable>
-                </View>
-
-                <View className="flex-row items-center rounded-xl border border-slate-300 bg-slate-50 pr-1 dark:border-slate-700 dark:bg-slate-950">
-                    <TextInput
-                        value={password}
-                        onChangeText={onPasswordChange}
-                        secureTextEntry={!showPassword}
-                        placeholder="Password"
-                        placeholderTextColor="#64748b"
-                        className="flex-1 px-4 py-3 text-slate-900 dark:text-slate-100"
-                    />
-                    <Pressable
-                        onPress={() => setShowPassword((prev) => !prev)}
-                        accessibilityRole="button"
-                        accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
-                        className="px-3 py-2.5">
-                        <Ionicons
-                            name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                             size={20}
                             color="#64748b"
                         />

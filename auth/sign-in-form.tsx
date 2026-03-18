@@ -1,3 +1,5 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
 import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
 
 type SignInFormProps = {
@@ -21,6 +23,8 @@ export function SignInForm({
     onSubmit,
     onSwitchToSignUp,
 }: SignInFormProps) {
+    const [showPassword, setShowPassword] = useState(false);
+
     return (
         <View className="gap-4">
             <Text className="text-3xl font-bold text-slate-900 dark:text-slate-50">Welcome</Text>
@@ -38,14 +42,27 @@ export function SignInForm({
                 className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
             />
 
-            <TextInput
-                value={password}
-                onChangeText={onPasswordChange}
-                secureTextEntry
-                placeholder="Password"
-                placeholderTextColor="#64748b"
-                className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-            />
+            <View className="flex-row items-center rounded-xl border border-slate-300 bg-slate-50 pr-1 dark:border-slate-700 dark:bg-slate-950">
+                <TextInput
+                    value={password}
+                    onChangeText={onPasswordChange}
+                    secureTextEntry={!showPassword}
+                    placeholder="Password"
+                    placeholderTextColor="#64748b"
+                    className="flex-1 px-4 py-3 text-slate-900 dark:text-slate-100"
+                />
+                <Pressable
+                    onPress={() => setShowPassword((prev) => !prev)}
+                    accessibilityRole="button"
+                    accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                    className="px-3 py-2.5">
+                    <Ionicons
+                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                        size={20}
+                        color="#64748b"
+                    />
+                </Pressable>
+            </View>
 
             <Pressable
                 onPress={onSubmit}
