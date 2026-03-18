@@ -45,7 +45,7 @@ export function SignUpForm({
                 Sign up to start using Language Converter.
             </Text>
 
-            <View className="gap-3">
+            <View className="gap-4">
                 <TextInput
                     value={name}
                     onChangeText={onNameChange}
