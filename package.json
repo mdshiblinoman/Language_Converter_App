@@ -8,6 +8,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "server:start": "npm --prefix server run start",
+    "server:dev": "npm --prefix server run dev",
     "lint": "expo lint"
   },
   "dependencies": {

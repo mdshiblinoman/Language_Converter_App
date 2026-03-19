@@ -31,6 +31,57 @@ Required environment variables:
 - `EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET`
 - `EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
 - `EXPO_PUBLIC_FIREBASE_APP_ID`
+- `EXPO_PUBLIC_TRANSLATION_SERVER_URL` (optional in emulator, recommended on real device)
+
+## PDF Translation (Upload -> Translate -> Download)
+
+This project now includes a dedicated backend for PDF translation and download.
+
+### 1) Configure environments
+
+At project root:
+
+```bash
+cp .env.example .env
+```
+
+At server folder:
+
+```bash
+cp server/.env.example server/.env
+```
+
+If you run Expo on a real device, set `EXPO_PUBLIC_TRANSLATION_SERVER_URL` in root `.env` to your computer LAN IP, for example:
+
+```bash
+EXPO_PUBLIC_TRANSLATION_SERVER_URL=http://192.168.0.25:4000
+```
+
+### 2) Start backend server
+
+```bash
+npm run server:start
+```
+
+Or in watch mode:
+
+```bash
+npm run server:dev
+```
+
+Backend health endpoint:
+
+```bash
+http://localhost:4000/health
+```
+
+### 3) Use from app
+
+1. Sign in.
+2. Choose source and target languages.
+3. In `PDF Translation` card, tap `Choose PDF`.
+4. Tap `Translate PDF & Download`.
+5. The app downloads (web) or opens share/save dialog (mobile) for translated PDF.
 
 In the output, you'll find options to open the app in a
 

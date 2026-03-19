@@ -18,6 +18,7 @@ import {
 
 import { SignInForm } from '@/auth/sign-in-form';
 import { SignUpForm } from '@/auth/sign-up-form';
+import { PdfTranslationCard } from '@/components/pdf-translation-card';
 import { useAuth } from '@/hooks/use-auth';
 import { useVoiceInput } from '@/hooks/use-voice-input';
 import {
@@ -432,6 +433,13 @@ export default function HomeScreen() {
                         {translatedText || 'Your translated result will appear here.'}
                     </Text>
                 </View>
+
+                <PdfTranslationCard
+                    sourceLanguageCode={sourceLanguage.code}
+                    targetLanguageCode={targetLanguage.code}
+                    sourceLanguageName={sourceLanguage.name}
+                    targetLanguageName={targetLanguage.name}
+                />
             </ScrollView>
 
             <Modal
