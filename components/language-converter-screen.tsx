@@ -11,13 +11,13 @@ import {
     View,
 } from 'react-native';
 
+import { useAuth } from '@/hooks/use-auth';
+import { addChatHistoryEntry } from '@/lib/chat-history';
 import {
     BASE_LANGUAGES,
     TARGET_LANGUAGES,
     type Language
 } from '@/lib/languages';
-import { addChatHistoryEntry } from '@/lib/chat-history';
-import { useAuth } from '@/hooks/use-auth';
 import { translateTextInChunks } from '@/lib/text-translation';
 
 type PickerType = 'source' | 'target' | null;

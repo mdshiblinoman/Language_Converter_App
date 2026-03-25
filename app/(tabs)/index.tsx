@@ -3,7 +3,6 @@ import { useRouter } from 'expo-router';
 import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
-    signOut,
     updateProfile,
 } from 'firebase/auth';
 import { useState } from 'react';
@@ -145,15 +144,6 @@ export default function HomeScreen() {
         }
     };
 
-    const handleSignOut = async () => {
-        try {
-            await signOut(auth);
-        } catch (requestError) {
-            console.error(requestError);
-            setAuthError('Unable to sign out right now. Please try again.');
-        }
-    };
-
     if (isAuthLoading) {
         return (
             <View className="flex-1 items-center justify-center bg-slate-100 dark:bg-slate-950">
@@ -216,27 +206,13 @@ export default function HomeScreen() {
                 className="flex-1"
                 contentContainerClassName="gap-4 px-4 pb-10 pt-6"
                 keyboardShouldPersistTaps="handled">
-                <View className="flex-row items-start justify-between">
-                    <View className="flex-1 pr-3">
-                        <Text className="text-4xl font-bold leading-10 text-slate-900 dark:text-slate-50">
-                            Home
-                        </Text>
-                        <Text className="mt-1 text-base text-slate-600 dark:text-slate-300">
-                            Choose what you want to translate.
-                        </Text>
-                    </View>
+                <View className="flex-row items-start justify-end">
                     <Pressable
                         onPress={() => router.push('/(tabs)/profile')}
                         accessibilityLabel="Profile"
                         className="h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900">
                         <Ionicons name="person-outline" size={22} color="#334155" />
                     </Pressable>
-                </View>
-
-                <View className="rounded-2xl border border-slate-300 bg-white px-3 py-2.5 dark:border-slate-700 dark:bg-slate-900">
-                    <Text className="text-sm text-slate-600 dark:text-slate-300" numberOfLines={1}>
-                        Signed in as {user.email ?? 'user'}
-                    </Text>
                 </View>
 
                 {HOME_OPTIONS.map((option) => {
@@ -261,12 +237,6 @@ export default function HomeScreen() {
                         </Pressable>
                     );
                 })}
-
-                <Pressable
-                    onPress={handleSignOut}
-                    className="mt-2 min-h-12 items-center justify-center rounded-xl bg-rose-700 dark:bg-rose-600">
-                    <Text className="font-bold text-white">Sign Out</Text>
-                </Pressable>
 
                 {authError ? <Text className="font-semibold text-red-700">{authError}</Text> : null}
             </ScrollView>

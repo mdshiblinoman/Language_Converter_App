@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { signOut } from 'firebase/auth';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { useAuth } from '@/hooks/use-auth';
-import { ChatHistoryItem, getChatHistoryByUser } from '@/lib/chat-history';
+import { ChatHistoryItem, clearChatHistoryByUser, getChatHistoryByUser } from '@/lib/chat-history';
+import { auth } from '@/services/firebase';
 
 const formatDateTime = (timestamp: number) => {
     try {
@@ -40,6 +42,22 @@ export default function ProfileScreen() {
         }, [loadChats])
     );
 
+    const handleSignOut = async () => {
+        try {
+            await signOut(auth);
+            router.replace('/(tabs)');
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const handleResetChats = async () => {
+        if (!user?.uid) return;
+
+        await clearChatHistoryByUser(user.uid);
+        setChats([]);
+    };
+
     return (
         <View className="flex-1 bg-cyan-50 dark:bg-slate-950">
             <ScrollView className="flex-1" contentContainerClassName="gap-4 px-4 pb-10 pt-6">
@@ -60,6 +78,19 @@ export default function ProfileScreen() {
                     </Text>
                     <Text className="mt-1 text-sm text-slate-700 dark:text-slate-200">Email: {user?.email || 'Unknown'}</Text>
                     <Text className="mt-1 text-sm text-slate-700 dark:text-slate-200">User ID: {user?.uid || 'Unknown'}</Text>
+
+                    <View className="mt-4 flex-row gap-2">
+                        <Pressable
+                            onPress={handleSignOut}
+                            className="flex-1 items-center rounded-xl bg-rose-700 py-2.5 dark:bg-rose-600">
+                            <Text className="font-semibold text-white">Sign Out</Text>
+                        </Pressable>
+                        <Pressable
+                            onPress={handleResetChats}
+                            className="flex-1 items-center rounded-xl bg-amber-600 py-2.5 dark:bg-amber-500">
+                            <Text className="font-semibold text-white">Reset Chats</Text>
+                        </Pressable>
+                    </View>
                 </View>
 
                 <View className="rounded-2xl border border-slate-300 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">

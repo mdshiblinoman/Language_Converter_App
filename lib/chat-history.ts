@@ -62,3 +62,16 @@ export const addChatHistoryEntry = async (input: AddChatHistoryInput) => {
         console.error(error);
     }
 };
+
+export const clearChatHistoryByUser = async (userId: string) => {
+    try {
+        const payload = await AsyncStorage.getItem(CHAT_HISTORY_KEY);
+        if (!payload) return;
+
+        const existing = (JSON.parse(payload) as ChatHistoryItem[]) || [];
+        const filtered = existing.filter((item) => item.userId !== userId);
+        await AsyncStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(filtered));
+    } catch (error) {
+        console.error(error);
+    }
+};
