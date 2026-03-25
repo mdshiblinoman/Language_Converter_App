@@ -22,6 +22,14 @@ import { auth } from '@/services/firebase';
 
 type HomeOptionId = 'text' | 'voice' | 'pdf' | 'docs' | 'other';
 
+const ROUTE_BY_OPTION: Record<HomeOptionId, '/(tabs)/text-converter' | '/(tabs)/voice-converter' | '/(tabs)/pdf-converter' | '/(tabs)/docs-converter' | '/(tabs)/other-converter'> = {
+    text: '/(tabs)/text-converter',
+    voice: '/(tabs)/voice-converter',
+    pdf: '/(tabs)/pdf-converter',
+    docs: '/(tabs)/docs-converter',
+    other: '/(tabs)/other-converter',
+};
+
 const HOME_OPTIONS: {
     id: HomeOptionId;
     title: string;
@@ -253,10 +261,7 @@ export default function HomeScreen() {
                             <Pressable
                                 onPress={() => {
                                     setSelectedOption(option.id);
-                                    router.push({
-                                        pathname: '/(tabs)/converter',
-                                        params: { mode: option.id },
-                                    });
+                                    router.push(ROUTE_BY_OPTION[option.id]);
                                 }}
                                 className={`rounded-xl px-4 py-2 ${isSelected
                                     ? 'bg-emerald-700 dark:bg-emerald-600'

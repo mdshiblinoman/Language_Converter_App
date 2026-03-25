@@ -11,9 +11,33 @@ export default function TabLayout() {
         }}
       />
       <Stack.Screen
-        name="converter"
+        name="text-converter"
         options={{
-          title: 'Language Converter',
+          title: 'Text Converter',
+        }}
+      />
+      <Stack.Screen
+        name="voice-converter"
+        options={{
+          title: 'Voice Converter',
+        }}
+      />
+      <Stack.Screen
+        name="pdf-converter"
+        options={{
+          title: 'PDF Converter',
+        }}
+      />
+      <Stack.Screen
+        name="docs-converter"
+        options={{
+          title: 'Docs Converter',
+        }}
+      />
+      <Stack.Screen
+        name="other-converter"
+        options={{
+          title: 'Other Converter',
         }}
       />
     </Stack>
