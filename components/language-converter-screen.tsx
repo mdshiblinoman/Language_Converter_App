@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Modal,
@@ -12,6 +13,7 @@ import {
 } from 'react-native';
 
 import { useAuth } from '@/hooks/use-auth';
+import { useVoiceInput } from '@/hooks/use-voice-input';
 import { addChatHistoryEntry } from '@/lib/chat-history';
 import {
     BASE_LANGUAGES,
@@ -28,10 +30,26 @@ type LanguageConverterScreenProps = {
     modeLabel: string;
 };
 
+type SelectedAudioFile = {
+    uri: string;
+    name: string;
+    size?: number;
+    mimeType?: string;
+};
+
+const formatBytes = (size?: number) => {
+    if (!size) return 'Unknown size';
+    const mb = size / (1024 * 1024);
+    if (mb >= 1) return `${mb.toFixed(2)} MB`;
+    return `${(size / 1024).toFixed(0)} KB`;
+};
+
 export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenProps) {
     const router = useRouter();
     const { user } = useAuth();
     const latestRequestId = useRef(0);
+    const isVoiceMode = modeLabel === 'Voice';
+    const isAudioMode = modeLabel === 'Audio File';
 
     const [sourceLanguage, setSourceLanguage] = useState<Language>(BASE_LANGUAGES[0]);
     const [targetLanguage, setTargetLanguage] = useState<Language>(TARGET_LANGUAGES[0]);
@@ -41,6 +59,24 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
     const [activePicker, setActivePicker] = useState<PickerType>(null);
     const [isTranslating, setIsTranslating] = useState(false);
     const [error, setError] = useState('');
+    const [selectedAudioFile, setSelectedAudioFile] = useState<SelectedAudioFile | null>(null);
+
+    const handleFinalTranscript = useCallback((transcript: string) => {
+        setSourceText((current) =>
+            current.trim().length > 0 ? `${current.trimEnd()} ${transcript}` : transcript
+        );
+    }, []);
+
+    const {
+        isListening,
+        speechError,
+        interimTranscript,
+        startVoiceInput,
+        stopVoiceInput,
+    } = useVoiceInput({
+        sourceLanguageCode: sourceLanguage.code,
+        onFinalTranscript: handleFinalTranscript,
+    });
 
     const pickerLanguages = activePicker === 'source' ? BASE_LANGUAGES : TARGET_LANGUAGES;
 
@@ -80,6 +116,29 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
 
         setSearchText('');
         setActivePicker(null);
+    };
+
+    const handlePickAudioFile = async () => {
+        try {
+            const result = await DocumentPicker.getDocumentAsync({
+                type: ['audio/*'],
+                copyToCacheDirectory: true,
+                multiple: false,
+            });
+
+            if (result.canceled || result.assets.length === 0) return;
+
+            const asset = result.assets[0];
+            setSelectedAudioFile({
+                uri: asset.uri,
+                name: asset.name || 'audio-file',
+                size: asset.size,
+                mimeType: asset.mimeType,
+            });
+        } catch (requestError) {
+            console.error(requestError);
+            setError('Could not pick audio file. Please try again.');
+        }
     };
 
     useEffect(() => {
@@ -186,7 +245,7 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
                 <View className="gap-2 rounded-2xl border border-slate-300 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
                     <Text className="text-base font-semibold text-slate-900 dark:text-slate-100">Input Text</Text>
                     <TextInput
-                        placeholder="Type text here..."
+                        placeholder={isVoiceMode ? 'Speak using the mic or type text here...' : isAudioMode ? 'Choose audio file, or type transcript text here...' : 'Type text here...'}
                         placeholderTextColor="#64748b"
                         value={sourceText}
                         onChangeText={setSourceText}
@@ -194,6 +253,51 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
                         textAlignVertical="top"
                         className="min-h-36 text-base leading-6 text-slate-900 dark:text-slate-100"
                     />
+
+                    {isVoiceMode ? (
+                        <View className="gap-2">
+                            <Pressable
+                                onPress={isListening ? stopVoiceInput : startVoiceInput}
+                                accessibilityLabel={isListening ? 'Stop voice input' : 'Start voice input'}
+                                className={`min-h-11 items-center justify-center rounded-xl ${isListening
+                                    ? 'bg-rose-700 dark:bg-rose-600'
+                                    : 'bg-cyan-700 dark:bg-cyan-600'
+                                    }`}>
+                                <Text className="font-semibold text-white">
+                                    {isListening ? 'Stop Voice Input' : 'Start Voice Input'}
+                                </Text>
+                            </Pressable>
+
+                            {interimTranscript ? (
+                                <Text className="text-sm text-slate-600 dark:text-slate-300">
+                                    Listening: {interimTranscript}
+                                </Text>
+                            ) : null}
+
+                            {speechError ? <Text className="text-sm font-semibold text-red-700">{speechError}</Text> : null}
+                        </View>
+                    ) : null}
+
+                    {isAudioMode ? (
+                        <View className="gap-2">
+                            <Pressable
+                                onPress={handlePickAudioFile}
+                                className="min-h-11 items-center justify-center rounded-xl bg-cyan-700 dark:bg-cyan-600">
+                                <Text className="font-semibold text-white">Choose Audio File</Text>
+                            </Pressable>
+
+                            {selectedAudioFile ? (
+                                <View className="rounded-xl border border-slate-200 bg-slate-50 p-2.5 dark:border-slate-700 dark:bg-slate-950">
+                                    <Text className="text-sm font-semibold text-slate-800 dark:text-slate-100" numberOfLines={1}>
+                                        {selectedAudioFile.name}
+                                    </Text>
+                                    <Text className="mt-0.5 text-xs text-slate-500 dark:text-slate-300">
+                                        {selectedAudioFile.mimeType || 'audio'} • {formatBytes(selectedAudioFile.size)}
+                                    </Text>
+                                </View>
+                            ) : null}
+                        </View>
+                    ) : null}
                 </View>
 
                 {isTranslating ? (
