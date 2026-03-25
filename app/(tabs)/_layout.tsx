@@ -10,6 +10,12 @@ export default function TabLayout() {
           title: 'Converter',
         }}
       />
+      <Stack.Screen
+        name="converter"
+        options={{
+          title: 'Language Converter',
+        }}
+      />
     </Stack>
   );
 }

@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
@@ -61,6 +62,7 @@ const HOME_OPTIONS: {
 
 export default function HomeScreen() {
     const { user, isAuthLoading } = useAuth();
+    const router = useRouter();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -233,7 +235,7 @@ export default function HomeScreen() {
                     const isSelected = selectedOption === option.id;
 
                     return (
-                        <Pressable
+                        <View
                             key={option.id}
                             className="flex-row items-center justify-between rounded-2xl border border-slate-300 bg-white p-3.5 dark:border-slate-700 dark:bg-slate-900">
                             <View className="flex-1 pr-3">
@@ -249,14 +251,20 @@ export default function HomeScreen() {
                             </View>
 
                             <Pressable
-                                onPress={() => setSelectedOption(option.id)}
+                                onPress={() => {
+                                    setSelectedOption(option.id);
+                                    router.push({
+                                        pathname: '/(tabs)/converter',
+                                        params: { mode: option.id },
+                                    });
+                                }}
                                 className={`rounded-xl px-4 py-2 ${isSelected
                                     ? 'bg-emerald-700 dark:bg-emerald-600'
                                     : 'bg-cyan-700 dark:bg-cyan-600'
                                     }`}>
                                 <Text className="font-semibold text-white">{isSelected ? 'Selected' : 'Select'}</Text>
                             </Pressable>
-                        </Pressable>
+                        </View>
                     );
                 })}
 
