@@ -80,7 +80,6 @@ export default function HomeScreen() {
     const [authMode, setAuthMode] = useState<'sign-in' | 'sign-up'>('sign-in');
     const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
     const [authError, setAuthError] = useState('');
-    const [selectedOption, setSelectedOption] = useState<HomeOptionId | null>(null);
 
     const handleSignIn = async () => {
         const normalizedEmail = email.trim().toLowerCase();
@@ -227,6 +226,7 @@ export default function HomeScreen() {
                         </Text>
                     </View>
                     <Pressable
+                        onPress={() => router.push('/(tabs)/profile')}
                         accessibilityLabel="Profile"
                         className="h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900">
                         <Ionicons name="person-outline" size={22} color="#334155" />
@@ -240,11 +240,10 @@ export default function HomeScreen() {
                 </View>
 
                 {HOME_OPTIONS.map((option) => {
-                    const isSelected = selectedOption === option.id;
-
                     return (
-                        <View
+                        <Pressable
                             key={option.id}
+                            onPress={() => router.push(ROUTE_BY_OPTION[option.id])}
                             className="flex-row items-center justify-between rounded-2xl border border-slate-300 bg-white p-3.5 dark:border-slate-700 dark:bg-slate-900">
                             <View className="flex-1 pr-3">
                                 <View className="flex-row items-center gap-2">
@@ -258,18 +257,8 @@ export default function HomeScreen() {
                                 </Text>
                             </View>
 
-                            <Pressable
-                                onPress={() => {
-                                    setSelectedOption(option.id);
-                                    router.push(ROUTE_BY_OPTION[option.id]);
-                                }}
-                                className={`rounded-xl px-4 py-2 ${isSelected
-                                    ? 'bg-emerald-700 dark:bg-emerald-600'
-                                    : 'bg-cyan-700 dark:bg-cyan-600'
-                                    }`}>
-                                <Text className="font-semibold text-white">{isSelected ? 'Selected' : 'Select'}</Text>
-                            </Pressable>
-                        </View>
+                            <Ionicons name="chevron-forward" size={20} color="#0f766e" />
+                        </Pressable>
                     );
                 })}
 
@@ -278,14 +267,6 @@ export default function HomeScreen() {
                     className="mt-2 min-h-12 items-center justify-center rounded-xl bg-rose-700 dark:bg-rose-600">
                     <Text className="font-bold text-white">Sign Out</Text>
                 </Pressable>
-
-                {selectedOption ? (
-                    <View className="rounded-2xl border border-emerald-300 bg-emerald-100 p-3 dark:border-emerald-700 dark:bg-emerald-950">
-                        <Text className="text-base font-semibold text-emerald-900 dark:text-emerald-200">
-                            Selected: {HOME_OPTIONS.find((option) => option.id === selectedOption)?.title}
-                        </Text>
-                    </View>
-                ) : null}
 
                 {authError ? <Text className="font-semibold text-red-700">{authError}</Text> : null}
             </ScrollView>

@@ -40,6 +40,12 @@ export default function TabLayout() {
           title: 'Other Converter',
         }}
       />
+      <Stack.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+        }}
+      />
     </Stack>
   );
 }

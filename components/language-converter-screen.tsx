@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Modal,
@@ -12,10 +12,12 @@ import {
 } from 'react-native';
 
 import {
-    SOURCE_LANGUAGES,
+    BASE_LANGUAGES,
     TARGET_LANGUAGES,
-    type Language,
+    type Language
 } from '@/lib/languages';
+import { addChatHistoryEntry } from '@/lib/chat-history';
+import { useAuth } from '@/hooks/use-auth';
 import { translateTextInChunks } from '@/lib/text-translation';
 
 type PickerType = 'source' | 'target' | null;
@@ -28,8 +30,10 @@ type LanguageConverterScreenProps = {
 
 export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenProps) {
     const router = useRouter();
+    const { user } = useAuth();
+    const latestRequestId = useRef(0);
 
-    const [sourceLanguage, setSourceLanguage] = useState<Language>(SOURCE_LANGUAGES[0]);
+    const [sourceLanguage, setSourceLanguage] = useState<Language>(BASE_LANGUAGES[0]);
     const [targetLanguage, setTargetLanguage] = useState<Language>(TARGET_LANGUAGES[0]);
     const [sourceText, setSourceText] = useState('');
     const [translatedText, setTranslatedText] = useState('');
@@ -38,7 +42,7 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
     const [isTranslating, setIsTranslating] = useState(false);
     const [error, setError] = useState('');
 
-    const pickerLanguages = activePicker === 'source' ? SOURCE_LANGUAGES : TARGET_LANGUAGES;
+    const pickerLanguages = activePicker === 'source' ? BASE_LANGUAGES : TARGET_LANGUAGES;
 
     const filteredLanguages = useMemo(() => {
         const query = searchText.trim().toLowerCase();
@@ -66,11 +70,11 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
 
         if (activePicker === 'target') {
             setTargetLanguage(language);
-            if (sourceLanguage.code !== 'auto' && language.code === sourceLanguage.code) {
-                const fallback = SOURCE_LANGUAGES.find(
-                    (item) => item.code !== 'auto' && item.code !== language.code
-                );
-                if (fallback) setSourceLanguage(fallback);
+            if (language.code === sourceLanguage.code) {
+                const fallback = BASE_LANGUAGES.find((item) => item.code !== language.code);
+                if (fallback) {
+                    setSourceLanguage(fallback);
+                }
             }
         }
 
@@ -78,37 +82,68 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
         setActivePicker(null);
     };
 
-    const handleTranslate = async () => {
-        if (!sourceText.trim()) {
-            setError('Please enter text to translate.');
+    useEffect(() => {
+        const normalizedText = sourceText.trim();
+
+        if (!normalizedText) {
+            setTranslatedText('');
+            setError('');
+            setIsTranslating(false);
             return;
         }
 
-        if (sourceLanguage.code !== 'auto' && sourceLanguage.code === targetLanguage.code) {
+        if (sourceLanguage.code === targetLanguage.code) {
+            setTranslatedText('');
             setError('Source and target language cannot be the same.');
+            setIsTranslating(false);
             return;
         }
 
         setError('');
-        setIsTranslating(true);
 
-        try {
-            const result = await translateTextInChunks({
-                text: sourceText,
-                sourceCode: sourceLanguage.code,
-                targetCode: targetLanguage.code,
-                maxCharsPerRequest: MAX_CHARS_PER_REQUEST,
-            });
+        const requestId = latestRequestId.current + 1;
+        latestRequestId.current = requestId;
 
-            setTranslatedText(result.translatedText);
-        } catch (requestError) {
-            console.error(requestError);
-            setError('Translation failed. Please try again.');
-            setTranslatedText('');
-        } finally {
-            setIsTranslating(false);
-        }
-    };
+        const timerId = setTimeout(async () => {
+            setIsTranslating(true);
+
+            try {
+                const result = await translateTextInChunks({
+                    text: sourceText,
+                    sourceCode: sourceLanguage.code,
+                    targetCode: targetLanguage.code,
+                    maxCharsPerRequest: MAX_CHARS_PER_REQUEST,
+                });
+
+                if (latestRequestId.current !== requestId) return;
+                setTranslatedText(result.translatedText);
+
+                if (user?.uid && sourceText.trim() && result.translatedText.trim()) {
+                    await addChatHistoryEntry({
+                        userId: user.uid,
+                        modeLabel,
+                        sourceLanguageCode: sourceLanguage.code,
+                        targetLanguageCode: targetLanguage.code,
+                        sourceText,
+                        translatedText: result.translatedText,
+                    });
+                }
+            } catch (requestError) {
+                if (latestRequestId.current !== requestId) return;
+                console.error(requestError);
+                setError('Translation failed. Please try again.');
+                setTranslatedText('');
+            } finally {
+                if (latestRequestId.current === requestId) {
+                    setIsTranslating(false);
+                }
+            }
+        }, 450);
+
+        return () => {
+            clearTimeout(timerId);
+        };
+    }, [modeLabel, sourceText, sourceLanguage.code, targetLanguage.code, user?.uid]);
 
     return (
         <View className="flex-1 bg-cyan-50 dark:bg-slate-950">
@@ -161,20 +196,12 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
                     />
                 </View>
 
-                <Pressable
-                    onPress={handleTranslate}
-                    disabled={isTranslating}
-                    className="min-h-12 items-center justify-center rounded-xl bg-cyan-700 dark:bg-cyan-600"
-                    style={{ opacity: isTranslating ? 0.7 : 1 }}>
-                    {isTranslating ? (
-                        <View className="flex-row items-center gap-2">
-                            <ActivityIndicator color="#ffffff" />
-                            <Text className="font-bold text-white">Translating</Text>
-                        </View>
-                    ) : (
-                        <Text className="font-bold text-white">Translate</Text>
-                    )}
-                </Pressable>
+                {isTranslating ? (
+                    <View className="flex-row items-center justify-center gap-2 rounded-xl border border-cyan-300 bg-cyan-100 py-3 dark:border-cyan-700 dark:bg-cyan-950">
+                        <ActivityIndicator color="#0e7490" />
+                        <Text className="font-semibold text-cyan-900 dark:text-cyan-200">Auto translating...</Text>
+                    </View>
+                ) : null}
 
                 {error ? <Text className="font-semibold text-red-700">{error}</Text> : null}
 
