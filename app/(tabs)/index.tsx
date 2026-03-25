@@ -19,11 +19,13 @@ import { SignUpForm } from '@/auth/sign-up-form';
 import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/services/firebase';
 
-type HomeOptionId = 'text' | 'voice' | 'pdf' | 'docs' | 'other';
+type HomeOptionId = 'text' | 'voice' | 'audio' | 'video' | 'pdf' | 'docs' | 'other';
 
-const ROUTE_BY_OPTION: Record<HomeOptionId, '/(tabs)/text-converter' | '/(tabs)/voice-converter' | '/(tabs)/pdf-converter' | '/(tabs)/docs-converter' | '/(tabs)/other-converter'> = {
+const ROUTE_BY_OPTION: Record<HomeOptionId, '/(tabs)/text-converter' | '/(tabs)/voice-converter' | '/(tabs)/audio-converter' | '/(tabs)/video-converter' | '/(tabs)/pdf-converter' | '/(tabs)/docs-converter' | '/(tabs)/other-converter'> = {
     text: '/(tabs)/text-converter',
     voice: '/(tabs)/voice-converter',
+    audio: '/(tabs)/audio-converter',
+    video: '/(tabs)/video-converter',
     pdf: '/(tabs)/pdf-converter',
     docs: '/(tabs)/docs-converter',
     other: '/(tabs)/other-converter',
@@ -46,6 +48,18 @@ const HOME_OPTIONS: {
             title: 'Voice',
             description: 'Convert your speech to translation input.',
             icon: 'mic-outline',
+        },
+        {
+            id: 'audio',
+            title: 'Audio File',
+            description: 'Upload audio and translate spoken content.',
+            icon: 'musical-notes-outline',
+        },
+        {
+            id: 'video',
+            title: 'Video File',
+            description: 'Upload video and translate subtitle text.',
+            icon: 'videocam-outline',
         },
         {
             id: 'pdf',

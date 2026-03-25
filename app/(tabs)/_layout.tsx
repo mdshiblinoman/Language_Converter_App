@@ -23,6 +23,18 @@ export default function TabLayout() {
         }}
       />
       <Stack.Screen
+        name="audio-converter"
+        options={{
+          title: 'Audio Converter',
+        }}
+      />
+      <Stack.Screen
+        name="video-converter"
+        options={{
+          title: 'Video Converter',
+        }}
+      />
+      <Stack.Screen
         name="pdf-converter"
         options={{
           title: 'PDF Converter',
