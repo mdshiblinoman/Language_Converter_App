@@ -22,6 +22,10 @@ import {
 import type { PickerType, SelectedMediaFile } from '@/components/language-converter/types';
 import { useAuth } from '@/hooks/use-auth';
 import { useVoiceInput } from '@/hooks/use-voice-input';
+import {
+    downloadOrShareTranslatedAudio,
+    requestTranslatedAudio,
+} from '@/lib/audio-translation';
 import { addChatHistoryEntry } from '@/lib/chat-history';
 import {
     BASE_LANGUAGES,
@@ -56,7 +60,9 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
     const [searchText, setSearchText] = useState('');
     const [activePicker, setActivePicker] = useState<PickerType>(null);
     const [isTranslating, setIsTranslating] = useState(false);
+    const [isAudioSubmitting, setIsAudioSubmitting] = useState(false);
     const [error, setError] = useState('');
+    const [audioStatus, setAudioStatus] = useState('');
     const [selectedMediaFile, setSelectedMediaFile] = useState<SelectedMediaFile | null>(null);
 
     const handleFinalTranscript = useCallback((transcript: string) => {
@@ -121,9 +127,47 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
             const mediaFile = await pickMediaFile(modeFlags);
             if (!mediaFile) return;
             setSelectedMediaFile(mediaFile);
+            if (modeFlags.isAudioMode) {
+                setAudioStatus('Audio selected. Ready to translate and download.');
+            }
         } catch (requestError) {
             console.error(requestError);
             setError(getPickerErrorMessage(modeFlags));
+        }
+    };
+
+    const handleTranslateAudioAndDownload = async () => {
+        if (!selectedMediaFile) {
+            setError('Please choose an audio file first.');
+            return;
+        }
+
+        if (sourceLanguage.code !== 'auto' && sourceLanguage.code === targetLanguage.code) {
+            setError('Source and target language cannot be the same.');
+            return;
+        }
+
+        setError('');
+        setIsAudioSubmitting(true);
+        setAudioStatus('Uploading audio and converting language...');
+
+        try {
+            const translatedResult = await requestTranslatedAudio({
+                file: selectedMediaFile,
+                sourceCode: sourceLanguage.code,
+                targetCode: targetLanguage.code,
+            });
+
+            setAudioStatus('Translated audio ready. Download is starting...');
+            await downloadOrShareTranslatedAudio(translatedResult);
+            setAudioStatus('Translated audio downloaded successfully.');
+        } catch (requestError) {
+            console.error(requestError);
+            const message = requestError instanceof Error ? requestError.message : 'Audio translation failed.';
+            setError(message);
+            setAudioStatus(message);
+        } finally {
+            setIsAudioSubmitting(false);
         }
     };
 
@@ -281,6 +325,29 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
                                         {selectedMediaFile.mimeType || getMediaTypeLabel(modeFlags)} • {formatBytes(selectedMediaFile.size)}
                                     </Text>
                                 </View>
+                            ) : null}
+
+                            {modeFlags.isAudioMode ? (
+                                <>
+                                    <Pressable
+                                        onPress={handleTranslateAudioAndDownload}
+                                        disabled={isAudioSubmitting}
+                                        className="min-h-11 items-center justify-center rounded-xl bg-emerald-700 dark:bg-emerald-500"
+                                        style={{ opacity: isAudioSubmitting ? 0.7 : 1 }}>
+                                        {isAudioSubmitting ? (
+                                            <View className="flex-row items-center gap-2">
+                                                <ActivityIndicator color="#ffffff" />
+                                                <Text className="font-semibold text-white">Processing Audio...</Text>
+                                            </View>
+                                        ) : (
+                                            <Text className="font-semibold text-white">Translate Audio & Download</Text>
+                                        )}
+                                    </Pressable>
+
+                                    {audioStatus ? (
+                                        <Text className="text-sm text-slate-600 dark:text-slate-300">{audioStatus}</Text>
+                                    ) : null}
+                                </>
                             ) : null}
                         </View>
                     ) : null}

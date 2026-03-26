@@ -83,6 +83,38 @@ http://localhost:4000/health
 4. Tap `Translate PDF & Download`.
 5. The app downloads (web) or opens share/save dialog (mobile) for translated PDF.
 
+## Audio Translation (Upload -> Translate -> Download Audio)
+
+This project now supports converting uploaded audio speech into another language and returning a downloadable translated audio file.
+
+### 1) Configure server OpenAI credentials
+
+In `server/.env`, set:
+
+```bash
+OPENAI_API_KEY=your_openai_api_key
+OPENAI_TTS_VOICE=alloy
+```
+
+Notes:
+
+- `OPENAI_API_KEY` is required for speech-to-text and text-to-speech.
+- `OPENAI_TTS_VOICE` is optional (default: `alloy`).
+
+### 2) Start backend server
+
+```bash
+npm run server:start
+```
+
+### 3) Use from app
+
+1. Open `Audio File` converter tab.
+2. Choose source and target languages.
+3. Tap `Choose Audio File` and select an audio file.
+4. Tap `Translate Audio & Download`.
+5. The app downloads (web) or opens share/save dialog (mobile) for translated MP3 audio.
+
 In the output, you'll find options to open the app in a
 
 - [development build](https://docs.expo.dev/develop/development-builds/introduction/)

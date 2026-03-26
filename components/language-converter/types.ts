@@ -7,6 +7,7 @@ export type SelectedMediaFile = {
     name: string;
     size?: number;
     mimeType?: string;
+    webFile?: File;
 };
 
 export type ModeFlags = {

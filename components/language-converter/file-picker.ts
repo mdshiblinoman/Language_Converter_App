@@ -21,5 +21,6 @@ export const pickMediaFile = async (flags: ModeFlags): Promise<SelectedMediaFile
         name: asset.name || getFallbackFileName(flags),
         size: asset.size,
         mimeType: asset.mimeType,
+        webFile: asset.file,
     };
 };
