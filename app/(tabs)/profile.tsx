@@ -19,6 +19,8 @@ const formatDateTime = (timestamp: number) => {
 export default function ProfileScreen() {
     const router = useRouter();
     const { user } = useAuth();
+    const userName = user?.displayName?.trim() || 'User';
+    const userInitial = userName.charAt(0).toUpperCase();
 
     const [isLoading, setIsLoading] = useState(true);
     const [chats, setChats] = useState<ChatHistoryItem[]>([]);
@@ -72,23 +74,37 @@ export default function ProfileScreen() {
                 </View>
 
                 <View className="rounded-2xl border border-slate-300 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-                    <Text className="text-base font-semibold text-slate-900 dark:text-slate-100">Profile Info</Text>
-                    <Text className="mt-2 text-sm text-slate-700 dark:text-slate-200">
-                        Name: {user?.displayName?.trim() || 'Not set'}
-                    </Text>
-                    <Text className="mt-1 text-sm text-slate-700 dark:text-slate-200">Email: {user?.email || 'Unknown'}</Text>
-                    <Text className="mt-1 text-sm text-slate-700 dark:text-slate-200">User ID: {user?.uid || 'Unknown'}</Text>
+                    <View className="flex-row items-center gap-3">
+                        <View className="h-14 w-14 items-center justify-center rounded-full bg-cyan-700 dark:bg-cyan-600">
+                            <Text className="text-xl font-bold text-white">{userInitial || 'U'}</Text>
+                        </View>
+                        <View className="flex-1">
+                            <Text className="text-lg font-bold text-slate-900 dark:text-slate-100">{userName}</Text>
+                            <Text className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">
+                                {user?.email || 'No email found'}
+                            </Text>
+                        </View>
+                    </View>
 
-                    <View className="mt-4 flex-row gap-2">
+                    <View className="mt-4 gap-2">
+                        <View className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-950">
+                            <Text className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">Total Chats</Text>
+                            <Text className="mt-1 text-sm text-slate-800 dark:text-slate-100">{chats.length}</Text>
+                        </View>
+                    </View>
+
+                    <View className="mt-4 gap-2">
                         <Pressable
                             onPress={handleSignOut}
-                            className="flex-1 items-center rounded-xl bg-rose-700 py-2.5 dark:bg-rose-600">
+                            className="flex-row items-center justify-center gap-2 rounded-xl bg-rose-700 py-3 dark:bg-rose-600">
+                            <Ionicons name="log-out-outline" size={18} color="#ffffff" />
                             <Text className="font-semibold text-white">Sign Out</Text>
                         </Pressable>
                         <Pressable
                             onPress={handleResetChats}
-                            className="flex-1 items-center rounded-xl bg-amber-600 py-2.5 dark:bg-amber-500">
-                            <Text className="font-semibold text-white">Reset Chats</Text>
+                            className="flex-row items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-100 py-3 dark:border-amber-700 dark:bg-amber-900/40">
+                            <Ionicons name="refresh-outline" size={18} color="#92400e" />
+                            <Text className="font-semibold text-amber-900 dark:text-amber-200">Reset All Chats</Text>
                         </Pressable>
                     </View>
                 </View>
