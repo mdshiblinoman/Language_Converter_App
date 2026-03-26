@@ -3,6 +3,7 @@ const express = require('express');
 
 const { audioRoutes } = require('./routes/audio-routes');
 const { allowedOrigin } = require('./config');
+const { docsRoutes } = require('./routes/docs-routes');
 const { errorHandler } = require('./middleware/error-handler');
 const { pdfRoutes } = require('./routes/pdf-routes');
 const { videoRoutes } = require('./routes/video-routes');
@@ -21,6 +22,7 @@ app.get('/health', (_request, response) => {
 });
 
 app.use('/api/audio', audioRoutes);
+app.use('/api/docs', docsRoutes);
 app.use('/api/video', videoRoutes);
 app.use('/api/pdf', pdfRoutes);
 app.use(errorHandler);

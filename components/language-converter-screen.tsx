@@ -32,11 +32,19 @@ import {
     TARGET_LANGUAGES,
     type Language
 } from '@/lib/languages';
+import {
+    downloadOrShareTranslatedPdf,
+    requestTranslatedPdf,
+} from '@/lib/pdf-translation';
 import { translateTextInChunks } from '@/lib/text-translation';
 import {
     downloadOrShareTranslatedVideo,
     requestTranslatedVideo,
 } from '@/lib/video-translation';
+import {
+    downloadOrShareTranslatedDoc,
+    requestTranslatedDoc,
+} from '../lib/docs-translation';
 
 const MAX_CHARS_PER_REQUEST = 450;
 
@@ -131,11 +139,15 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
             const mediaFile = await pickMediaFile(modeFlags);
             if (!mediaFile) return;
             setSelectedMediaFile(mediaFile);
-            if (modeFlags.isAudioMode || modeFlags.isVideoMode) {
+            if (modeFlags.isAudioMode || modeFlags.isVideoMode || modeFlags.isPdfMode || modeFlags.isDocsMode) {
                 setMediaStatus(
                     modeFlags.isAudioMode
                         ? 'Audio selected. Ready to translate and download.'
-                        : 'Video selected. Ready to translate and download.'
+                        : modeFlags.isVideoMode
+                            ? 'Video selected. Ready to translate and download.'
+                            : modeFlags.isPdfMode
+                                ? 'PDF selected. Ready to translate and download.'
+                                : 'Document selected. Ready to translate and download.'
                 );
             }
         } catch (requestError) {
@@ -146,7 +158,15 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
 
     const handleTranslateMediaAndDownload = async () => {
         if (!selectedMediaFile) {
-            setError(modeFlags.isVideoMode ? 'Please choose a video file first.' : 'Please choose an audio file first.');
+            if (modeFlags.isVideoMode) {
+                setError('Please choose a video file first.');
+            } else if (modeFlags.isPdfMode) {
+                setError('Please choose a PDF file first.');
+            } else if (modeFlags.isDocsMode) {
+                setError('Please choose a document file first.');
+            } else {
+                setError('Please choose an audio file first.');
+            }
             return;
         }
 
@@ -157,11 +177,15 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
 
         setError('');
         setIsMediaSubmitting(true);
-        setMediaStatus(
-            modeFlags.isVideoMode
-                ? 'Uploading video and regenerating translated output...'
-                : 'Uploading audio and converting language...'
-        );
+        if (modeFlags.isVideoMode) {
+            setMediaStatus('Uploading video and regenerating translated output...');
+        } else if (modeFlags.isPdfMode) {
+            setMediaStatus('Uploading PDF and generating translated file...');
+        } else if (modeFlags.isDocsMode) {
+            setMediaStatus('Uploading document and generating translated file...');
+        } else {
+            setMediaStatus('Uploading audio and converting language...');
+        }
 
         try {
             if (modeFlags.isVideoMode) {
@@ -174,6 +198,32 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
                 setMediaStatus('Translated video ready. Download is starting...');
                 await downloadOrShareTranslatedVideo(translatedResult);
                 setMediaStatus('Translated video downloaded successfully.');
+            } else if (modeFlags.isPdfMode) {
+                const translatedResult = await requestTranslatedPdf({
+                    file: {
+                        uri: selectedMediaFile.uri,
+                        name: selectedMediaFile.name,
+                        mimeType: selectedMediaFile.mimeType || 'application/pdf',
+                        size: selectedMediaFile.size,
+                        webFile: selectedMediaFile.webFile,
+                    },
+                    sourceCode: sourceLanguage.code,
+                    targetCode: targetLanguage.code,
+                });
+
+                setMediaStatus('Translated PDF ready. Download is starting...');
+                await downloadOrShareTranslatedPdf(translatedResult);
+                setMediaStatus('Translated PDF downloaded successfully.');
+            } else if (modeFlags.isDocsMode) {
+                const translatedResult = await requestTranslatedDoc({
+                    file: selectedMediaFile,
+                    sourceCode: sourceLanguage.code,
+                    targetCode: targetLanguage.code,
+                });
+
+                setMediaStatus('Translated document ready. Download is starting...');
+                await downloadOrShareTranslatedDoc(translatedResult);
+                setMediaStatus('Translated document downloaded successfully.');
             } else {
                 const translatedResult = await requestTranslatedAudio({
                     file: selectedMediaFile,
@@ -191,7 +241,11 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
                 ? requestError.message
                 : modeFlags.isVideoMode
                     ? 'Video translation failed.'
-                    : 'Audio translation failed.';
+                    : modeFlags.isPdfMode
+                        ? 'PDF translation failed.'
+                        : modeFlags.isDocsMode
+                            ? 'Document translation failed.'
+                            : 'Audio translation failed.';
             setError(message);
             setMediaStatus(message);
         } finally {
@@ -355,7 +409,7 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
                                 </View>
                             ) : null}
 
-                            {modeFlags.isAudioMode || modeFlags.isVideoMode ? (
+                            {modeFlags.isAudioMode || modeFlags.isVideoMode || modeFlags.isPdfMode || modeFlags.isDocsMode ? (
                                 <>
                                     <Pressable
                                         onPress={handleTranslateMediaAndDownload}
@@ -366,12 +420,24 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
                                             <View className="flex-row items-center gap-2">
                                                 <ActivityIndicator color="#ffffff" />
                                                 <Text className="font-semibold text-white">
-                                                    {modeFlags.isVideoMode ? 'Processing Video...' : 'Processing Audio...'}
+                                                    {modeFlags.isVideoMode
+                                                        ? 'Processing Video...'
+                                                        : modeFlags.isPdfMode
+                                                            ? 'Processing PDF...'
+                                                            : modeFlags.isDocsMode
+                                                                ? 'Processing Document...'
+                                                                : 'Processing Audio...'}
                                                 </Text>
                                             </View>
                                         ) : (
                                             <Text className="font-semibold text-white">
-                                                {modeFlags.isVideoMode ? 'Translate Video & Download' : 'Translate Audio & Download'}
+                                                {modeFlags.isVideoMode
+                                                    ? 'Translate Video & Download'
+                                                    : modeFlags.isPdfMode
+                                                        ? 'Translate PDF & Download'
+                                                        : modeFlags.isDocsMode
+                                                            ? 'Translate Document & Download'
+                                                            : 'Translate Audio & Download'}
                                             </Text>
                                         )}
                                     </Pressable>

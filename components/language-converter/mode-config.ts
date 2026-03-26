@@ -23,11 +23,10 @@ export const getPickerType = (flags: ModeFlags): string[] => {
     if (flags.isPdfMode) return ['application/pdf'];
 
     return [
-        'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.oasis.opendocument.text',
         'text/plain',
         'text/rtf',
+        'application/rtf',
     ];
 };
 
