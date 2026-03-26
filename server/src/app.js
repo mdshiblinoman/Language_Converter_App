@@ -5,6 +5,7 @@ const { audioRoutes } = require('./routes/audio-routes');
 const { allowedOrigin } = require('./config');
 const { errorHandler } = require('./middleware/error-handler');
 const { pdfRoutes } = require('./routes/pdf-routes');
+const { videoRoutes } = require('./routes/video-routes');
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.get('/health', (_request, response) => {
 });
 
 app.use('/api/audio', audioRoutes);
+app.use('/api/video', videoRoutes);
 app.use('/api/pdf', pdfRoutes);
 app.use(errorHandler);
 

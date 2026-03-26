@@ -33,6 +33,10 @@ import {
     type Language
 } from '@/lib/languages';
 import { translateTextInChunks } from '@/lib/text-translation';
+import {
+    downloadOrShareTranslatedVideo,
+    requestTranslatedVideo,
+} from '@/lib/video-translation';
 
 const MAX_CHARS_PER_REQUEST = 450;
 
@@ -60,9 +64,9 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
     const [searchText, setSearchText] = useState('');
     const [activePicker, setActivePicker] = useState<PickerType>(null);
     const [isTranslating, setIsTranslating] = useState(false);
-    const [isAudioSubmitting, setIsAudioSubmitting] = useState(false);
+    const [isMediaSubmitting, setIsMediaSubmitting] = useState(false);
     const [error, setError] = useState('');
-    const [audioStatus, setAudioStatus] = useState('');
+    const [mediaStatus, setMediaStatus] = useState('');
     const [selectedMediaFile, setSelectedMediaFile] = useState<SelectedMediaFile | null>(null);
 
     const handleFinalTranscript = useCallback((transcript: string) => {
@@ -127,8 +131,12 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
             const mediaFile = await pickMediaFile(modeFlags);
             if (!mediaFile) return;
             setSelectedMediaFile(mediaFile);
-            if (modeFlags.isAudioMode) {
-                setAudioStatus('Audio selected. Ready to translate and download.');
+            if (modeFlags.isAudioMode || modeFlags.isVideoMode) {
+                setMediaStatus(
+                    modeFlags.isAudioMode
+                        ? 'Audio selected. Ready to translate and download.'
+                        : 'Video selected. Ready to translate and download.'
+                );
             }
         } catch (requestError) {
             console.error(requestError);
@@ -136,9 +144,9 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
         }
     };
 
-    const handleTranslateAudioAndDownload = async () => {
+    const handleTranslateMediaAndDownload = async () => {
         if (!selectedMediaFile) {
-            setError('Please choose an audio file first.');
+            setError(modeFlags.isVideoMode ? 'Please choose a video file first.' : 'Please choose an audio file first.');
             return;
         }
 
@@ -148,26 +156,46 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
         }
 
         setError('');
-        setIsAudioSubmitting(true);
-        setAudioStatus('Uploading audio and converting language...');
+        setIsMediaSubmitting(true);
+        setMediaStatus(
+            modeFlags.isVideoMode
+                ? 'Uploading video and regenerating translated output...'
+                : 'Uploading audio and converting language...'
+        );
 
         try {
-            const translatedResult = await requestTranslatedAudio({
-                file: selectedMediaFile,
-                sourceCode: sourceLanguage.code,
-                targetCode: targetLanguage.code,
-            });
+            if (modeFlags.isVideoMode) {
+                const translatedResult = await requestTranslatedVideo({
+                    file: selectedMediaFile,
+                    sourceCode: sourceLanguage.code,
+                    targetCode: targetLanguage.code,
+                });
 
-            setAudioStatus('Translated audio ready. Download is starting...');
-            await downloadOrShareTranslatedAudio(translatedResult);
-            setAudioStatus('Translated audio downloaded successfully.');
+                setMediaStatus('Translated video ready. Download is starting...');
+                await downloadOrShareTranslatedVideo(translatedResult);
+                setMediaStatus('Translated video downloaded successfully.');
+            } else {
+                const translatedResult = await requestTranslatedAudio({
+                    file: selectedMediaFile,
+                    sourceCode: sourceLanguage.code,
+                    targetCode: targetLanguage.code,
+                });
+
+                setMediaStatus('Translated audio ready. Download is starting...');
+                await downloadOrShareTranslatedAudio(translatedResult);
+                setMediaStatus('Translated audio downloaded successfully.');
+            }
         } catch (requestError) {
             console.error(requestError);
-            const message = requestError instanceof Error ? requestError.message : 'Audio translation failed.';
+            const message = requestError instanceof Error
+                ? requestError.message
+                : modeFlags.isVideoMode
+                    ? 'Video translation failed.'
+                    : 'Audio translation failed.';
             setError(message);
-            setAudioStatus(message);
+            setMediaStatus(message);
         } finally {
-            setIsAudioSubmitting(false);
+            setIsMediaSubmitting(false);
         }
     };
 
@@ -327,25 +355,29 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
                                 </View>
                             ) : null}
 
-                            {modeFlags.isAudioMode ? (
+                            {modeFlags.isAudioMode || modeFlags.isVideoMode ? (
                                 <>
                                     <Pressable
-                                        onPress={handleTranslateAudioAndDownload}
-                                        disabled={isAudioSubmitting}
+                                        onPress={handleTranslateMediaAndDownload}
+                                        disabled={isMediaSubmitting}
                                         className="min-h-11 items-center justify-center rounded-xl bg-emerald-700 dark:bg-emerald-500"
-                                        style={{ opacity: isAudioSubmitting ? 0.7 : 1 }}>
-                                        {isAudioSubmitting ? (
+                                        style={{ opacity: isMediaSubmitting ? 0.7 : 1 }}>
+                                        {isMediaSubmitting ? (
                                             <View className="flex-row items-center gap-2">
                                                 <ActivityIndicator color="#ffffff" />
-                                                <Text className="font-semibold text-white">Processing Audio...</Text>
+                                                <Text className="font-semibold text-white">
+                                                    {modeFlags.isVideoMode ? 'Processing Video...' : 'Processing Audio...'}
+                                                </Text>
                                             </View>
                                         ) : (
-                                            <Text className="font-semibold text-white">Translate Audio & Download</Text>
+                                            <Text className="font-semibold text-white">
+                                                {modeFlags.isVideoMode ? 'Translate Video & Download' : 'Translate Audio & Download'}
+                                            </Text>
                                         )}
                                     </Pressable>
 
-                                    {audioStatus ? (
-                                        <Text className="text-sm text-slate-600 dark:text-slate-300">{audioStatus}</Text>
+                                    {mediaStatus ? (
+                                        <Text className="text-sm text-slate-600 dark:text-slate-300">{mediaStatus}</Text>
                                     ) : null}
                                 </>
                             ) : null}
