@@ -1,4 +1,3 @@
-import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
@@ -49,28 +48,6 @@ const parseServerError = async (response: Response) => {
     } catch {
         return `Request failed with status ${response.status}`;
     }
-};
-
-export const pickPdfFile = async (): Promise<PickedPdf | null> => {
-    const result = await DocumentPicker.getDocumentAsync({
-        type: 'application/pdf',
-        copyToCacheDirectory: true,
-        multiple: false,
-    });
-
-    if (result.canceled || result.assets.length === 0) {
-        return null;
-    }
-
-    const asset = result.assets[0];
-
-    return {
-        uri: asset.uri,
-        name: asset.name || 'document.pdf',
-        mimeType: asset.mimeType || 'application/pdf',
-        size: asset.size,
-        webFile: asset.file,
-    };
 };
 
 export const requestTranslatedPdf = async ({
