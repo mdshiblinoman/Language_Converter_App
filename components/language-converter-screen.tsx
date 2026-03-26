@@ -254,6 +254,12 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
     };
 
     useEffect(() => {
+        if (modeFlags.isFileMode) {
+            setTranslatedText('');
+            setIsTranslating(false);
+            return;
+        }
+
         const normalizedText = sourceText.trim();
 
         if (!normalizedText) {
@@ -314,7 +320,7 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
         return () => {
             clearTimeout(timerId);
         };
-    }, [modeLabel, sourceText, sourceLanguage.code, targetLanguage.code, user?.uid]);
+    }, [modeFlags.isFileMode, modeLabel, sourceText, sourceLanguage.code, targetLanguage.code, user?.uid]);
 
     return (
         <View className="flex-1 bg-cyan-50 dark:bg-slate-950">
@@ -355,16 +361,20 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
                 </View>
 
                 <View className="gap-2 rounded-2xl border border-slate-300 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
-                    <Text className="text-base font-semibold text-slate-900 dark:text-slate-100">Input Text</Text>
-                    <TextInput
-                        placeholder={getInputPlaceholder(modeFlags)}
-                        placeholderTextColor="#64748b"
-                        value={sourceText}
-                        onChangeText={setSourceText}
-                        multiline
-                        textAlignVertical="top"
-                        className="min-h-36 text-base leading-6 text-slate-900 dark:text-slate-100"
-                    />
+                    {!modeFlags.isFileMode ? (
+                        <>
+                            <Text className="text-base font-semibold text-slate-900 dark:text-slate-100">Input Text</Text>
+                            <TextInput
+                                placeholder={getInputPlaceholder(modeFlags)}
+                                placeholderTextColor="#64748b"
+                                value={sourceText}
+                                onChangeText={setSourceText}
+                                multiline
+                                textAlignVertical="top"
+                                className="min-h-36 text-base leading-6 text-slate-900 dark:text-slate-100"
+                            />
+                        </>
+                    ) : null}
 
                     {modeFlags.isVoiceMode ? (
                         <View className="gap-2">
@@ -451,7 +461,7 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
                     ) : null}
                 </View>
 
-                {isTranslating ? (
+                {!modeFlags.isFileMode && isTranslating ? (
                     <View className="flex-row items-center justify-center gap-2 rounded-xl border border-cyan-300 bg-cyan-100 py-3 dark:border-cyan-700 dark:bg-cyan-950">
                         <ActivityIndicator color="#0e7490" />
                         <Text className="font-semibold text-cyan-900 dark:text-cyan-200">Auto translating...</Text>
@@ -460,13 +470,15 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
 
                 {error ? <Text className="font-semibold text-red-700">{error}</Text> : null}
 
-                <View className="min-h-28 gap-2 rounded-2xl border border-slate-300 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
-                    <Text className="text-base font-semibold text-slate-900 dark:text-slate-100">Translated Text</Text>
-                    <Text
-                        className={`text-base leading-6 ${translatedText ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-300'}`}>
-                        {translatedText || 'Your translated result will appear here.'}
-                    </Text>
-                </View>
+                {!modeFlags.isFileMode ? (
+                    <View className="min-h-28 gap-2 rounded-2xl border border-slate-300 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+                        <Text className="text-base font-semibold text-slate-900 dark:text-slate-100">Translated Text</Text>
+                        <Text
+                            className={`text-base leading-6 ${translatedText ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-300'}`}>
+                            {translatedText || 'Your translated result will appear here.'}
+                        </Text>
+                    </View>
+                ) : null}
             </ScrollView>
 
             <LanguagePickerModal
