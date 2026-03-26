@@ -1,10 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
-    Modal,
     Pressable,
     ScrollView,
     Text,
@@ -12,6 +10,16 @@ import {
     View,
 } from 'react-native';
 
+import { pickMediaFile } from '@/components/language-converter/file-picker';
+import { LanguagePickerModal } from '@/components/language-converter/language-picker-modal';
+import {
+    getChooseFileButtonLabel,
+    getInputPlaceholder,
+    getMediaTypeLabel,
+    getModeFlags,
+    getPickerErrorMessage,
+} from '@/components/language-converter/mode-config';
+import type { PickerType, SelectedMediaFile } from '@/components/language-converter/types';
 import { useAuth } from '@/hooks/use-auth';
 import { useVoiceInput } from '@/hooks/use-voice-input';
 import { addChatHistoryEntry } from '@/lib/chat-history';
@@ -22,19 +30,10 @@ import {
 } from '@/lib/languages';
 import { translateTextInChunks } from '@/lib/text-translation';
 
-type PickerType = 'source' | 'target' | null;
-
 const MAX_CHARS_PER_REQUEST = 450;
 
 type LanguageConverterScreenProps = {
     modeLabel: string;
-};
-
-type SelectedAudioFile = {
-    uri: string;
-    name: string;
-    size?: number;
-    mimeType?: string;
 };
 
 const formatBytes = (size?: number) => {
@@ -48,8 +47,7 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
     const router = useRouter();
     const { user } = useAuth();
     const latestRequestId = useRef(0);
-    const isVoiceMode = modeLabel === 'Voice';
-    const isAudioMode = modeLabel === 'Audio File';
+    const modeFlags = getModeFlags(modeLabel);
 
     const [sourceLanguage, setSourceLanguage] = useState<Language>(BASE_LANGUAGES[0]);
     const [targetLanguage, setTargetLanguage] = useState<Language>(TARGET_LANGUAGES[0]);
@@ -59,7 +57,7 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
     const [activePicker, setActivePicker] = useState<PickerType>(null);
     const [isTranslating, setIsTranslating] = useState(false);
     const [error, setError] = useState('');
-    const [selectedAudioFile, setSelectedAudioFile] = useState<SelectedAudioFile | null>(null);
+    const [selectedMediaFile, setSelectedMediaFile] = useState<SelectedMediaFile | null>(null);
 
     const handleFinalTranscript = useCallback((transcript: string) => {
         setSourceText((current) =>
@@ -118,26 +116,14 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
         setActivePicker(null);
     };
 
-    const handlePickAudioFile = async () => {
+    const handlePickMediaFile = async () => {
         try {
-            const result = await DocumentPicker.getDocumentAsync({
-                type: ['audio/*'],
-                copyToCacheDirectory: true,
-                multiple: false,
-            });
-
-            if (result.canceled || result.assets.length === 0) return;
-
-            const asset = result.assets[0];
-            setSelectedAudioFile({
-                uri: asset.uri,
-                name: asset.name || 'audio-file',
-                size: asset.size,
-                mimeType: asset.mimeType,
-            });
+            const mediaFile = await pickMediaFile(modeFlags);
+            if (!mediaFile) return;
+            setSelectedMediaFile(mediaFile);
         } catch (requestError) {
             console.error(requestError);
-            setError('Could not pick audio file. Please try again.');
+            setError(getPickerErrorMessage(modeFlags));
         }
     };
 
@@ -245,7 +231,7 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
                 <View className="gap-2 rounded-2xl border border-slate-300 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
                     <Text className="text-base font-semibold text-slate-900 dark:text-slate-100">Input Text</Text>
                     <TextInput
-                        placeholder={isVoiceMode ? 'Speak using the mic or type text here...' : isAudioMode ? 'Choose audio file, or type transcript text here...' : 'Type text here...'}
+                        placeholder={getInputPlaceholder(modeFlags)}
                         placeholderTextColor="#64748b"
                         value={sourceText}
                         onChangeText={setSourceText}
@@ -254,7 +240,7 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
                         className="min-h-36 text-base leading-6 text-slate-900 dark:text-slate-100"
                     />
 
-                    {isVoiceMode ? (
+                    {modeFlags.isVoiceMode ? (
                         <View className="gap-2">
                             <Pressable
                                 onPress={isListening ? stopVoiceInput : startVoiceInput}
@@ -278,21 +264,21 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
                         </View>
                     ) : null}
 
-                    {isAudioMode ? (
+                    {modeFlags.isFileMode ? (
                         <View className="gap-2">
                             <Pressable
-                                onPress={handlePickAudioFile}
+                                onPress={handlePickMediaFile}
                                 className="min-h-11 items-center justify-center rounded-xl bg-cyan-700 dark:bg-cyan-600">
-                                <Text className="font-semibold text-white">Choose Audio File</Text>
+                                <Text className="font-semibold text-white">{getChooseFileButtonLabel(modeFlags)}</Text>
                             </Pressable>
 
-                            {selectedAudioFile ? (
+                            {selectedMediaFile ? (
                                 <View className="rounded-xl border border-slate-200 bg-slate-50 p-2.5 dark:border-slate-700 dark:bg-slate-950">
                                     <Text className="text-sm font-semibold text-slate-800 dark:text-slate-100" numberOfLines={1}>
-                                        {selectedAudioFile.name}
+                                        {selectedMediaFile.name}
                                     </Text>
                                     <Text className="mt-0.5 text-xs text-slate-500 dark:text-slate-300">
-                                        {selectedAudioFile.mimeType || 'audio'} • {formatBytes(selectedAudioFile.size)}
+                                        {selectedMediaFile.mimeType || getMediaTypeLabel(modeFlags)} • {formatBytes(selectedMediaFile.size)}
                                     </Text>
                                 </View>
                             ) : null}
@@ -318,42 +304,14 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
                 </View>
             </ScrollView>
 
-            <Modal
-                visible={activePicker !== null}
-                transparent
-                animationType="slide"
-                onRequestClose={() => setActivePicker(null)}>
-                <View className="flex-1 justify-end bg-black/35">
-                    <View className="max-h-[75%] gap-2.5 rounded-t-2xl border border-slate-300 bg-white p-3.5 dark:border-slate-700 dark:bg-slate-900">
-                        <Text className="text-xl font-bold text-slate-900 dark:text-slate-100">Select Language</Text>
-                        <TextInput
-                            value={searchText}
-                            onChangeText={setSearchText}
-                            placeholder="Search language..."
-                            placeholderTextColor="#64748b"
-                            className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                        />
-
-                        <ScrollView keyboardShouldPersistTaps="handled" contentContainerClassName="pb-2.5">
-                            {filteredLanguages.map((language) => (
-                                <Pressable
-                                    key={language.code}
-                                    onPress={() => handleSelectLanguage(language)}
-                                    className="flex-row items-center justify-between border-b border-slate-300 py-3 dark:border-slate-700">
-                                    <Text className="text-base text-slate-900 dark:text-slate-100">{language.name}</Text>
-                                    <Text className="text-base text-slate-500 dark:text-slate-300">{language.code}</Text>
-                                </Pressable>
-                            ))}
-                        </ScrollView>
-
-                        <Pressable
-                            onPress={() => setActivePicker(null)}
-                            className="items-center rounded-xl border border-lime-300 bg-lime-100 py-2.5 dark:border-lime-700 dark:bg-lime-950">
-                            <Text className="text-base font-semibold text-lime-900 dark:text-lime-200">Close</Text>
-                        </Pressable>
-                    </View>
-                </View>
-            </Modal>
+            <LanguagePickerModal
+                activePicker={activePicker}
+                searchText={searchText}
+                filteredLanguages={filteredLanguages}
+                onChangeSearchText={setSearchText}
+                onSelectLanguage={handleSelectLanguage}
+                onClose={() => setActivePicker(null)}
+            />
         </View>
     );
 }
