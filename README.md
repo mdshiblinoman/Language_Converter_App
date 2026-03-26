@@ -87,19 +87,31 @@ http://localhost:4000/health
 
 This project now supports converting uploaded audio speech into another language and returning a downloadable translated audio file.
 
-### 1) Configure server OpenAI credentials
+### 1) Configure server provider credentials
 
 In `server/.env`, set:
 
 ```bash
+AUDIO_TRANSLATION_PROVIDER=gemini
+
+# Gemini (used when AUDIO_TRANSLATION_PROVIDER=gemini)
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_TRANSCRIBE_MODEL=gemini-2.0-flash
+GEMINI_TRANSLATE_MODEL=gemini-2.0-flash
+GEMINI_TTS_MODEL=gemini-2.5-flash-preview-tts
+GEMINI_TTS_VOICE=Kore
+
+# OpenAI (used when AUDIO_TRANSLATION_PROVIDER=openai)
 OPENAI_API_KEY=your_openai_api_key
 OPENAI_TTS_VOICE=alloy
 ```
 
 Notes:
 
-- `OPENAI_API_KEY` is required for speech-to-text and text-to-speech.
-- `OPENAI_TTS_VOICE` is optional (default: `alloy`).
+- Set `AUDIO_TRANSLATION_PROVIDER` to `gemini` or `openai`.
+- For Gemini mode, `GEMINI_API_KEY` is required.
+- For OpenAI mode, `OPENAI_API_KEY` is required.
+- Voice fields are optional and have defaults.
 
 ### 2) Start backend server
 

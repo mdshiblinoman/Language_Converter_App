@@ -55,9 +55,6 @@ export const requestTranslatedAudio = async ({
     const baseUrl = getTranslationServerBaseUrl();
     const response = await fetch(`${baseUrl}/api/audio/translate`, {
         method: 'POST',
-        headers: {
-            Accept: 'audio/mpeg',
-        },
         body: buildAudioFormData(file, sourceCode, targetCode),
     });
 
@@ -67,13 +64,16 @@ export const requestTranslatedAudio = async ({
     }
 
     const contentDisposition = response.headers.get('content-disposition') || '';
+    const contentType = response.headers.get('content-type') || 'audio/mpeg';
     const nameMatch = contentDisposition.match(/filename=\"?([^\";]+)\"?/i);
-    const fileName = nameMatch?.[1] || `translated-${targetCode}.mp3`;
+    const fallbackExtension = contentType.includes('wav') ? 'wav' : 'mp3';
+    const fileName = nameMatch?.[1] || `translated-${targetCode}.${fallbackExtension}`;
 
     if (Platform.OS === 'web') {
         const blob = await response.blob();
         return {
             fileName,
+            mimeType: contentType,
             webBlob: blob,
             fileUri: '',
         };
@@ -89,6 +89,7 @@ export const requestTranslatedAudio = async ({
 
     return {
         fileName,
+        mimeType: contentType,
         webBlob: null,
         fileUri: outputPath,
     };
@@ -96,10 +97,12 @@ export const requestTranslatedAudio = async ({
 
 export const downloadOrShareTranslatedAudio = async ({
     fileName,
+    mimeType,
     fileUri,
     webBlob,
 }: {
     fileName: string;
+    mimeType: string;
     fileUri: string;
     webBlob: Blob | null;
 }) => {
@@ -125,8 +128,8 @@ export const downloadOrShareTranslatedAudio = async ({
     }
 
     await Sharing.shareAsync(fileUri, {
-        mimeType: 'audio/mpeg',
-        UTI: 'public.mp3',
+        mimeType,
+        UTI: mimeType.includes('wav') ? 'com.microsoft.waveform-audio' : 'public.mp3',
         dialogTitle: 'Download translated audio',
     });
 };

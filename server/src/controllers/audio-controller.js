@@ -18,7 +18,14 @@ const translateAudioController = async (request, response, next) => {
             return response.status(400).json({ message: 'Source and target language cannot be the same.' });
         }
 
-        const { translatedAudioBuffer, sourceText, translatedText, totalChunks } = await translateAudioToSpeech({
+        const {
+            translatedAudioBuffer,
+            translatedAudioMimeType = 'audio/mpeg',
+            translatedAudioExtension = 'mp3',
+            sourceText,
+            translatedText,
+            totalChunks,
+        } = await translateAudioToSpeech({
             audioBuffer: uploadedFile.buffer,
             fileName: uploadedFile.originalname,
             mimeType: uploadedFile.mimetype,
@@ -29,9 +36,9 @@ const translateAudioController = async (request, response, next) => {
         const safeBaseName = uploadedFile.originalname
             .replace(/\.[^/.]+$/i, '')
             .replace(/[^a-zA-Z0-9-_]/g, '_');
-        const downloadName = `${safeBaseName || 'translated-audio'}-${targetCode}.mp3`;
+        const downloadName = `${safeBaseName || 'translated-audio'}-${targetCode}.${translatedAudioExtension}`;
 
-        response.setHeader('Content-Type', 'audio/mpeg');
+        response.setHeader('Content-Type', translatedAudioMimeType);
         response.setHeader('X-Source-Text-Length', String(sourceText.length));
         response.setHeader('X-Translated-Text-Length', String(translatedText.length));
         response.setHeader('X-Translation-Chunks', String(totalChunks));
