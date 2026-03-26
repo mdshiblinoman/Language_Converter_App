@@ -28,7 +28,7 @@ import {
 } from '@/lib/audio-translation';
 import { addChatHistoryEntry } from '@/lib/chat-history';
 import {
-    BASE_LANGUAGES,
+    SOURCE_LANGUAGES,
     TARGET_LANGUAGES,
     type Language
 } from '@/lib/languages';
@@ -65,7 +65,7 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
     const latestRequestId = useRef(0);
     const modeFlags = getModeFlags(modeLabel);
 
-    const [sourceLanguage, setSourceLanguage] = useState<Language>(BASE_LANGUAGES[0]);
+    const [sourceLanguage, setSourceLanguage] = useState<Language>(SOURCE_LANGUAGES[0]);
     const [targetLanguage, setTargetLanguage] = useState<Language>(TARGET_LANGUAGES[0]);
     const [sourceText, setSourceText] = useState('');
     const [translatedText, setTranslatedText] = useState('');
@@ -94,7 +94,7 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
         onFinalTranscript: handleFinalTranscript,
     });
 
-    const pickerLanguages = activePicker === 'source' ? BASE_LANGUAGES : TARGET_LANGUAGES;
+    const pickerLanguages = activePicker === 'source' ? SOURCE_LANGUAGES : TARGET_LANGUAGES;
 
     const filteredLanguages = useMemo(() => {
         const query = searchText.trim().toLowerCase();
@@ -123,7 +123,7 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
         if (activePicker === 'target') {
             setTargetLanguage(language);
             if (language.code === sourceLanguage.code) {
-                const fallback = BASE_LANGUAGES.find((item) => item.code !== language.code);
+                const fallback = SOURCE_LANGUAGES.find((item) => item.code !== language.code);
                 if (fallback) {
                     setSourceLanguage(fallback);
                 }
