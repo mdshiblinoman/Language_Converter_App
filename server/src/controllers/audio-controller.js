@@ -39,6 +39,7 @@ const translateAudioController = async (request, response, next) => {
         const downloadName = `${safeBaseName || 'translated-audio'}-${targetCode}.${translatedAudioExtension}`;
 
         response.setHeader('Content-Type', translatedAudioMimeType);
+        response.setHeader('Content-Length', translatedAudioBuffer.length);
         response.setHeader('X-Source-Text-Length', String(sourceText.length));
         response.setHeader('X-Translated-Text-Length', String(translatedText.length));
         response.setHeader('X-Translation-Chunks', String(totalChunks));

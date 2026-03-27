@@ -40,13 +40,16 @@ const translateDocsController = async (request, response, next) => {
             .replace(/[^a-zA-Z0-9-_]/g, '_');
         const downloadName = `${safeBaseName || 'translated-doc'}-${targetCode}.txt`;
 
+        const translatedBuffer = Buffer.from(translatedText, 'utf-8');
+
         response.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        response.setHeader('Content-Length', translatedBuffer.length);
         response.setHeader('X-Source-Text-Length', String(sourceText.length));
         response.setHeader('X-Translated-Text-Length', String(translatedText.length));
         response.setHeader('X-Translation-Chunks', String(totalChunks));
         response.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
 
-        return response.status(200).send(translatedText);
+        return response.status(200).send(translatedBuffer);
     } catch (error) {
         return next(error);
     }

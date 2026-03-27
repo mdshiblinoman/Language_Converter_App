@@ -42,6 +42,7 @@ const translatePdfController = async (request, response, next) => {
         const downloadName = `${safeBaseName || 'translated'}-${targetCode}.pdf`;
 
         response.setHeader('Content-Type', 'application/pdf');
+        response.setHeader('Content-Length', translatedPdfBuffer.length);
         response.setHeader('X-Translation-Chunks', String(totalChunks));
         response.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
         return response.status(200).send(translatedPdfBuffer);

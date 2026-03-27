@@ -39,6 +39,7 @@ const translateVideoController = async (request, response, next) => {
         const downloadName = `${safeBaseName || 'translated-video'}-${targetCode}.${translatedVideoExtension}`;
 
         response.setHeader('Content-Type', translatedVideoMimeType);
+        response.setHeader('Content-Length', translatedVideoBuffer.length);
         response.setHeader('X-Source-Text-Length', String(sourceText.length));
         response.setHeader('X-Translated-Text-Length', String(translatedText.length));
         response.setHeader('X-Translation-Chunks', String(totalChunks));
