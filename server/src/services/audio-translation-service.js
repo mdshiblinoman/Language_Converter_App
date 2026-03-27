@@ -39,7 +39,11 @@ const getAudioProvider = () => (process.env.AUDIO_TRANSLATION_PROVIDER || 'opena
 const getGeminiApiKey = () => {
     const apiKey = process.env.GEMINI_API_KEY?.trim();
     if (!apiKey) {
-        throw new Error('GEMINI_API_KEY is not configured on the server.');
+        throw new Error(
+            'GEMINI_API_KEY is not configured on the server.\n' +
+            'Please add your Google Gemini API key to the .env file.\n' +
+            'Get one from: https://aistudio.google.com/app/apikeys'
+        );
     }
 
     return apiKey;
@@ -72,7 +76,11 @@ const getOpenAiClient = () => {
     const apiKey = process.env.OPENAI_API_KEY?.trim();
 
     if (!apiKey) {
-        throw new Error('OPENAI_API_KEY is not configured on the server.');
+        throw new Error(
+            'OPENAI_API_KEY is not configured on the server.\n' +
+            'Please add your OpenAI API key to the .env file.\n' +
+            'Get one from: https://platform.openai.com/api-keys'
+        );
     }
 
     return new OpenAI({ apiKey });
