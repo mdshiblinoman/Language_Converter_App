@@ -24,15 +24,8 @@ When something fails, you'll now get helpful error messages that:
 
 **Updated `.env` file** now includes:
 ```env
-# Audio Translation Provider (openai or gemini)
-AUDIO_TRANSLATION_PROVIDER=openai
-
-# OpenAI Configuration
-OPENAI_API_KEY=sk-your-key-here
-OPENAI_TTS_VOICE=alloy
-
-# Gemini Configuration  
-GEMINI_API_KEY=
+# Gemini Configuration
+GEMINI_API_KEY=your-key-here
 GEMINI_TRANSCRIBE_MODEL=gemini-2.0-flash
 ...
 ```
@@ -43,31 +36,19 @@ GEMINI_TRANSCRIBE_MODEL=gemini-2.0-flash
 
 The server **works** for downloads, but translation needs one more thing:
 
-### Choose Your AI Provider
+### Configure Gemini API
 
-#### **Option A: OpenAI** (Recommended, Paid)
-1. Create account at https://platform.openai.com
-2. Go to API Keys section
-3. Copy your API key
-4. Edit `.env`:
-   ```env
-   AUDIO_TRANSLATION_PROVIDER=openai
-   OPENAI_API_KEY=sk-your-key-here
-   ```
-5. Save and restart server
-
-**Costs:** ~$0.02-0.03 per minute of audio
-
----
-
-#### **Option B: Google Gemini** (Free tier available)
 1. Visit https://aistudio.google.com/app/apikeys  
 2. Click "Get API Key"
 3. Copy your key
 4. Edit `.env`:
    ```env
-   AUDIO_TRANSLATION_PROVIDER=gemini
    GEMINI_API_KEY=your-key-here
+   GEMINI_TRANSCRIBE_MODEL=gemini-2.0-flash
+   GEMINI_TRANSLATE_MODEL=gemini-2.0-flash
+   GEMINI_TTS_MODEL=gemini-2.5-flash-preview-tts
+   GEMINI_TTS_VOICE=Kore
+   GEMINI_VISION_MODEL=gemini-2.0-flash
    ```
 5. Save and restart server
 
@@ -116,14 +97,14 @@ curl http://localhost:4000/health
 
 ## ❓ Common Questions
 
-**Q: Do I need both OpenAI and Gemini keys?**
-A: No, choose ONE. The provider you set in `AUDIO_TRANSLATION_PROVIDER` is what gets used.
+**Q: Do I need more than one API key?**
+A: No. You only need a Gemini API key.
 
 **Q: What if I have neither key yet?**  
 A: You can still use text/document translation (uses free API), but audio/video won't work. Get a key first.
 
-**Q: Can I switch providers later?**
-A: Yes! Just change `AUDIO_TRANSLATION_PROVIDER` in `.env` and restart.
+**Q: Can I change Gemini models later?**
+A: Yes. Update `GEMINI_*_MODEL` values in `.env` and restart.
 
 **Q: Is the free translation quality good?**
 A: It's decent for most cases. For production, consider adding a paid provider.

@@ -60,14 +60,6 @@
 ## 🚀 Quick Start Guide
 
 ### Step 1: Get an API Key
-Choose ONE provider:
-
-**OpenAI** (Recommended):
-1. Go to https://platform.openai.com/api-keys
-2. Create API key
-3. Copy the key starting with `sk-`
-
-**Google Gemini** (Free):
 1. Go to https://aistudio.google.com/app/apikeys
 2. Click "Get API Key"
 3. Copy the key
@@ -75,13 +67,12 @@ Choose ONE provider:
 ### Step 2: Configure Server
 Edit `server/.env`:
 ```env
-# For OpenAI:
-AUDIO_TRANSLATION_PROVIDER=openai
-OPENAI_API_KEY=sk-your-key-here
-
-# OR for Gemini:
-AUDIO_TRANSLATION_PROVIDER=gemini
 GEMINI_API_KEY=your-key-here
+GEMINI_TRANSCRIBE_MODEL=gemini-2.0-flash
+GEMINI_TRANSLATE_MODEL=gemini-2.0-flash
+GEMINI_TTS_MODEL=gemini-2.5-flash-preview-tts
+GEMINI_TTS_VOICE=Kore
+GEMINI_VISION_MODEL=gemini-2.0-flash
 ```
 
 ### Step 3: Start Server
@@ -169,7 +160,7 @@ All endpoints accept multipart/form-data with file + language parameters.
 - Audio/video: Will fail with clear error message
 - PDF: Works, translates text
 
-### With OpenAI API Key
+### With Gemini API Key
 - Audio transcription: ~20s per minute of audio
 - Text-to-speech: ~2-5s per 1000 characters
 - Video processing: Depends on video length + audio processing time
@@ -216,7 +207,7 @@ All endpoints accept multipart/form-data with file + language parameters.
 - ✅ Client connection (auto-configured)
 
 ### What Needs One-Time Setup:
-- ⏳ Get API key (OpenAI or Gemini)
+- ⏳ Get Gemini API key
 - ⏳ Update `.env` file
 - ⏳ Restart server
 - ⏳ Done! Audio/video translation will work

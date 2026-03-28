@@ -38,22 +38,18 @@
 
 ## ⚠️ What's Still Needed To Use The App
 
-The server **now works** for downloading files, but translation features require **API Keys** from external services:
+The server **now works** for downloading files, but translation features require a Gemini API key:
 
-### Required Configuration (Choose One)
+### Required Configuration
 
-#### Option 1: OpenAI (Recommended)
+#### Google Gemini
 ```env
-AUDIO_TRANSLATION_PROVIDER=openai
-OPENAI_API_KEY=sk-your-key-here
-OPENAI_TTS_VOICE=alloy
-```
-- [Get OpenAI API Key](https://platform.openai.com/api-keys)
-
-#### Option 2: Google Gemini (Free)
-```env
-AUDIO_TRANSLATION_PROVIDER=gemini
 GEMINI_API_KEY=your-key-here
+GEMINI_TRANSCRIBE_MODEL=gemini-2.0-flash
+GEMINI_TRANSLATE_MODEL=gemini-2.0-flash
+GEMINI_TTS_MODEL=gemini-2.5-flash-preview-tts
+GEMINI_TTS_VOICE=Kore
+GEMINI_VISION_MODEL=gemini-2.0-flash
 ```
 - [Get Gemini API Key](https://aistudio.google.com/app/apikeys)
 
@@ -114,9 +110,9 @@ See `SETUP.md` for:
 
 ## 🎯 Next Steps
 
-1. Choose between **OpenAI** or **Gemini** provider
-2. Get API key from provider
-3. Update `.env` file with API key
+1. Get Gemini API key
+2. Update `.env` file with API key
+3. Restart server
 4. Restart server
 5. Start using the translation features
 

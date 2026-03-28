@@ -92,25 +92,17 @@ This project now supports converting uploaded audio speech into another language
 In `server/.env`, set:
 
 ```bash
-AUDIO_TRANSLATION_PROVIDER=gemini
-
-# Gemini (used when AUDIO_TRANSLATION_PROVIDER=gemini)
 GEMINI_API_KEY=your_gemini_api_key
 GEMINI_TRANSCRIBE_MODEL=gemini-2.0-flash
 GEMINI_TRANSLATE_MODEL=gemini-2.0-flash
 GEMINI_TTS_MODEL=gemini-2.5-flash-preview-tts
 GEMINI_TTS_VOICE=Kore
-
-# OpenAI (used when AUDIO_TRANSLATION_PROVIDER=openai)
-OPENAI_API_KEY=your_openai_api_key
-OPENAI_TTS_VOICE=alloy
+GEMINI_VISION_MODEL=gemini-2.0-flash
 ```
 
 Notes:
 
-- Set `AUDIO_TRANSLATION_PROVIDER` to `gemini` or `openai`.
-- For Gemini mode, `GEMINI_API_KEY` is required.
-- For OpenAI mode, `OPENAI_API_KEY` is required.
+- `GEMINI_API_KEY` is required.
 - Voice fields are optional and have defaults.
 
 ### 2) Start backend server

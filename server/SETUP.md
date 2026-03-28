@@ -2,36 +2,11 @@
 
 ## Prerequisites
 
-The server requires API keys to function. Choose one of the providers below:
+The server requires a Gemini API key to function.
 
-### Option 1: OpenAI (Recommended for Production)
+### Google Gemini Setup
 
-OpenAI provides excellent speech transcription (Whisper) and text-to-speech capabilities.
-
-**Steps:**
-1. [Get OpenAI API Key](https://platform.openai.com/api-keys)
-   - Sign up or log in to OpenAI
-   - Go to API Keys section
-   - Create a new API key
-
-2. Update `.env` file:
-   ```
-   AUDIO_TRANSLATION_PROVIDER=openai
-   OPENAI_API_KEY=sk-your-api-key-here
-   OPENAI_TTS_VOICE=alloy
-   ```
-
-3. Available voices: `alloy`, `echo`, `fable`, `onyx`, `nova`, `shimmer`
-
-**Costs:**
-- Whisper: $0.02 per minute of audio
-- Text-to-Speech: $0.015 per 1K characters
-
----
-
-### Option 2: Google Gemini (Free with limited usage)
-
-Google Gemini provides free AI services with generous rate limits.
+Google Gemini provides audio transcription, translation, text-to-speech, and image text extraction.
 
 **Steps:**
 1. [Get Gemini API Key](https://aistudio.google.com/app/apikeys)
@@ -41,12 +16,12 @@ Google Gemini provides free AI services with generous rate limits.
 
 2. Update `.env` file:
    ```
-   AUDIO_TRANSLATION_PROVIDER=gemini
    GEMINI_API_KEY=your-gemini-api-key
    GEMINI_TRANSCRIBE_MODEL=gemini-2.0-flash
    GEMINI_TRANSLATE_MODEL=gemini-2.0-flash
    GEMINI_TTS_MODEL=gemini-2.5-flash-preview-tts
    GEMINI_TTS_VOICE=Kore
+   GEMINI_VISION_MODEL=gemini-2.0-flash
    ```
 
 3. Available voices: `Kore`, and others (check Gemini documentation)
@@ -57,17 +32,18 @@ Google Gemini provides free AI services with generous rate limits.
 
 ---
 
-## Features by Provider
+## Features
 
-| Feature | OpenAI | Gemini |
-|---------|--------|--------|
-| Text Translation | ✅ (via free API) | ✅ |
-| Audio Transcription | ✅ (Whisper) | ✅ |
-| Audio Translation | ✅ | ✅ |
-| Video Translation | ✅ | ✅ |
-| Text-to-Speech | ✅ | ✅ |
-| Document Translation | ✅ | ✅ |
-| PDF Translation | ✅ | ✅ |
+| Feature | Gemini |
+|---------|--------|
+| Text Translation | ✅ |
+| Audio Transcription | ✅ |
+| Audio Translation | ✅ |
+| Video Translation | ✅ |
+| Text-to-Speech | ✅ |
+| Image OCR Translation | ✅ |
+| Document Translation | ✅ |
+| PDF Translation | ✅ |
 
 ---
 
@@ -157,11 +133,8 @@ POST /api/docs/translate
 
 ## Troubleshooting
 
-### Error: "OPENAI_API_KEY is not configured"
-**Solution:** Add your OpenAI API key to `.env` file
-
 ### Error: "GEMINI_API_KEY is not configured"
-**Solution:** Add your Gemini API key to `.env` file and set `AUDIO_TRANSLATION_PROVIDER=gemini`
+**Solution:** Add your Gemini API key to `.env` file
 
 ### Error: "Could not transcribe speech from this audio file"
 **Possible causes:**
@@ -195,27 +168,21 @@ PORT=4000
 # CORS Configuration
 ALLOWED_ORIGIN=*
 
-# Audio Provider Selection
-AUDIO_TRANSLATION_PROVIDER=openai  # or 'gemini'
-
-# OpenAI Configuration
-OPENAI_API_KEY=sk-...
-OPENAI_TTS_VOICE=alloy
-
 # Gemini Configuration
 GEMINI_API_KEY=...
 GEMINI_TRANSCRIBE_MODEL=gemini-2.0-flash
 GEMINI_TRANSLATE_MODEL=gemini-2.0-flash
 GEMINI_TTS_MODEL=gemini-2.5-flash-preview-tts
 GEMINI_TTS_VOICE=Kore
+GEMINI_VISION_MODEL=gemini-2.0-flash
 ```
 
 ---
 
 ## Next Steps
 
-1. Choose a provider (OpenAI or Gemini)
-2. Get API key
+1. Get Gemini API key
+2. Update `.env` file
 3. Update `.env` file
 4. Start the server
 5. Test endpoints
