@@ -14,7 +14,6 @@
         "ffmpeg-static": "^5.2.0",
         "mammoth": "^1.8.0",
         "multer": "^2.0.2",
-        "openai": "^6.33.0",
         "pdf-parse": "^1.1.1",
         "pdfkit": "^0.17.2"
     }

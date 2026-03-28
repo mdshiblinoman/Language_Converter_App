@@ -1,42 +1,59 @@
-const OpenAI = require('openai');
-
 const { translateLongText } = require('./translation-service');
 
-const buildDataUri = (buffer, mimeType) => {
-    const encoded = buffer.toString('base64');
-    return `data:${mimeType || 'image/jpeg'};base64,${encoded}`;
+const buildGeminiEndpoint = (apiKey, modelName) =>
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+const parseGeminiErrorMessage = (payload, statusCode) => {
+    const upstreamMessage = payload?.error?.message;
+    if (upstreamMessage) return upstreamMessage;
+    return `Gemini request failed with status ${statusCode}.`;
 };
 
-const getOpenAiClient = () => {
-    const apiKey = process.env.OPENAI_API_KEY?.trim();
+const requestGeminiContent = async ({ apiKey, modelName, payload }) => {
+    const response = await fetch(buildGeminiEndpoint(apiKey, modelName), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    });
+
+    const responseJson = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+        throw new Error(parseGeminiErrorMessage(responseJson, response.status));
+    }
+
+    return responseJson;
+};
+
+const getGeminiApiKey = () => {
+    const apiKey = process.env.GEMINI_API_KEY?.trim();
 
     if (!apiKey) {
         throw new Error(
-            'OPENAI_API_KEY is not configured on the server.\n' +
-            'Please add your OpenAI API key to the .env file.\n' +
-            'Get one from: https://platform.openai.com/api-keys'
+            'GEMINI_API_KEY is not configured on the server.\n' +
+            'Please add your Google Gemini API key to the .env file.\n' +
+            'Get one from: https://aistudio.google.com/app/apikeys'
         );
     }
 
-    return new OpenAI({ apiKey });
+    return apiKey;
 };
 
 const extractTextFromImage = async ({ imageBuffer, mimeType, sourceCode }) => {
-    const openai = getOpenAiClient();
-    const model = (process.env.OPENAI_VISION_MODEL || 'gpt-4o-mini').trim();
+    const apiKey = getGeminiApiKey();
+    const modelName = (process.env.GEMINI_VISION_MODEL || 'gemini-2.0-flash').trim();
     const sourceHint = sourceCode && sourceCode !== 'auto'
         ? `The source text is likely in language code "${sourceCode}".`
         : 'Detect the source language automatically.';
 
-    const completion = await openai.chat.completions.create({
-        model,
-        temperature: 0,
-        messages: [
+    const payload = {
+        contents: [
             {
                 role: 'user',
-                content: [
+                parts: [
                     {
-                        type: 'text',
                         text: [
                             'Read the attached image and extract only the visible text.',
                             sourceHint,
@@ -45,17 +62,28 @@ const extractTextFromImage = async ({ imageBuffer, mimeType, sourceCode }) => {
                         ].join(' '),
                     },
                     {
-                        type: 'image_url',
-                        image_url: {
-                            url: buildDataUri(imageBuffer, mimeType),
+                        inline_data: {
+                            mime_type: mimeType || 'image/jpeg',
+                            data: imageBuffer.toString('base64'),
                         },
                     },
                 ],
             },
         ],
+    };
+
+    const completion = await requestGeminiContent({
+        apiKey,
+        modelName,
+        payload,
     });
 
-    const extractedText = completion?.choices?.[0]?.message?.content?.trim() || '';
+    const extractedText = (completion?.candidates?.[0]?.content?.parts || [])
+        .map((part) => part?.text)
+        .filter(Boolean)
+        .join('')
+        .trim();
+
     if (!extractedText || extractedText === 'NO_TEXT_FOUND') {
         throw new Error('Could not extract readable text from this image.');
     }
