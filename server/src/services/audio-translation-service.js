@@ -1,8 +1,4 @@
-const OpenAI = require('openai');
-const { toFile } = require('openai/uploads');
-
 const { chunkText } = require('../utils/text-chunker');
-const { translateLongText } = require('./translation-service');
 
 const TTS_MAX_CHARS = 4000;
 const GEMINI_TRANSLATE_MAX_CHARS = 3000;
@@ -33,8 +29,6 @@ const requestGeminiContent = async ({ apiKey, modelName, payload }) => {
 
     return responseJson;
 };
-
-const getAudioProvider = () => (process.env.AUDIO_TRANSLATION_PROVIDER || 'openai').trim().toLowerCase();
 
 const getGeminiApiKey = () => {
     const apiKey = process.env.GEMINI_API_KEY?.trim();
@@ -70,38 +64,6 @@ const inferAudioExtension = (mimeType) => {
     if (mimeType === 'audio/webm') return 'webm';
     if (mimeType === 'audio/flac') return 'flac';
     return 'bin';
-};
-
-const getOpenAiClient = () => {
-    const apiKey = process.env.OPENAI_API_KEY?.trim();
-
-    if (!apiKey) {
-        throw new Error(
-            'OPENAI_API_KEY is not configured on the server.\n' +
-            'Please add your OpenAI API key to the .env file.\n' +
-            'Get one from: https://platform.openai.com/api-keys'
-        );
-    }
-
-    return new OpenAI({ apiKey });
-};
-
-const transcribeAudio = async ({ audioBuffer, fileName, mimeType, sourceCode }) => {
-    const openai = getOpenAiClient();
-    const audioFile = await toFile(audioBuffer, fileName || 'audio-input', mimeType || 'audio/mpeg');
-
-    const transcription = await openai.audio.transcriptions.create({
-        file: audioFile,
-        model: 'whisper-1',
-        ...(sourceCode && sourceCode !== 'auto' ? { language: sourceCode } : {}),
-    });
-
-    const sourceText = transcription?.text?.trim() || '';
-    if (!sourceText) {
-        throw new Error('Could not transcribe speech from this audio file.');
-    }
-
-    return sourceText;
 };
 
 const transcribeAudioWithGemini = async ({ audioBuffer, mimeType, sourceCode }) => {
@@ -179,29 +141,6 @@ const translateTextWithGemini = async ({ text, sourceCode, targetCode }) => {
     };
 };
 
-const synthesizeTranslatedSpeech = async ({ translatedText }) => {
-    if (translatedText.length > TTS_MAX_CHARS) {
-        throw new Error('Translated text is too long to synthesize as a single audio file.');
-    }
-
-    const openai = getOpenAiClient();
-    const voice = process.env.OPENAI_TTS_VOICE?.trim() || 'alloy';
-
-    const audioResponse = await openai.audio.speech.create({
-        model: 'tts-1',
-        voice,
-        input: translatedText,
-        format: 'mp3',
-    });
-
-    const bytes = await audioResponse.arrayBuffer();
-    return {
-        audioBuffer: Buffer.from(bytes),
-        audioMimeType: 'audio/mpeg',
-        fileExtension: 'mp3',
-    };
-};
-
 const synthesizeTranslatedSpeechWithGemini = async ({ translatedText }) => {
     const apiKey = getGeminiApiKey();
     const modelName = getGeminiModel('GEMINI_TTS_MODEL', 'gemini-2.5-flash-preview-tts');
@@ -248,50 +187,22 @@ const synthesizeTranslatedSpeechWithGemini = async ({ translatedText }) => {
     };
 };
 
-const translateAudioToSpeech = async ({ audioBuffer, fileName, mimeType, sourceCode, targetCode }) => {
-    const provider = getAudioProvider();
+const translateAudioToSpeech = async ({ audioBuffer, mimeType, sourceCode, targetCode }) => {
+    const sourceText = await transcribeAudioWithGemini({
+        audioBuffer,
+        mimeType,
+        sourceCode,
+    });
 
-    let sourceText;
-    let translatedText;
-    let totalChunks;
-    let synthesizedAudio;
+    const translated = await translateTextWithGemini({
+        text: sourceText,
+        sourceCode,
+        targetCode,
+    });
 
-    if (provider === 'gemini') {
-        sourceText = await transcribeAudioWithGemini({
-            audioBuffer,
-            mimeType,
-            sourceCode,
-        });
-
-        const translated = await translateTextWithGemini({
-            text: sourceText,
-            sourceCode,
-            targetCode,
-        });
-
-        translatedText = translated.translatedText;
-        totalChunks = translated.totalChunks;
-        synthesizedAudio = await synthesizeTranslatedSpeechWithGemini({ translatedText });
-    } else if (provider === 'openai') {
-        sourceText = await transcribeAudio({
-            audioBuffer,
-            fileName,
-            mimeType,
-            sourceCode,
-        });
-
-        const translated = await translateLongText({
-            text: sourceText,
-            sourceCode,
-            targetCode,
-        });
-
-        translatedText = translated.translatedText;
-        totalChunks = translated.totalChunks;
-        synthesizedAudio = await synthesizeTranslatedSpeech({ translatedText });
-    } else {
-        throw new Error('Unsupported AUDIO_TRANSLATION_PROVIDER. Use "openai" or "gemini".');
-    }
+    const translatedText = translated.translatedText;
+    const totalChunks = translated.totalChunks;
+    const synthesizedAudio = await synthesizeTranslatedSpeechWithGemini({ translatedText });
 
     return {
         sourceText,
