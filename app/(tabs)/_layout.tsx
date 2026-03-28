@@ -47,6 +47,12 @@ export default function TabLayout() {
         }}
       />
       <Stack.Screen
+        name="image-converter"
+        options={{
+          title: 'Image Converter',
+        }}
+      />
+      <Stack.Screen
         name="profile"
         options={{
           title: 'Profile',

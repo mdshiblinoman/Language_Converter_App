@@ -19,15 +19,16 @@ import { SignUpForm } from '@/auth/sign-up-form';
 import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/services/firebase';
 
-type HomeOptionId = 'text' | 'voice' | 'audio' | 'video' | 'pdf' | 'docs';
+type HomeOptionId = 'text' | 'voice' | 'audio' | 'video' | 'pdf' | 'docs' | 'image';
 
-const ROUTE_BY_OPTION: Record<HomeOptionId, '/(tabs)/text-converter' | '/(tabs)/voice-converter' | '/(tabs)/audio-converter' | '/(tabs)/video-converter' | '/(tabs)/pdf-converter' | '/(tabs)/docs-converter'> = {
+const ROUTE_BY_OPTION: Record<HomeOptionId, '/(tabs)/text-converter' | '/(tabs)/voice-converter' | '/(tabs)/audio-converter' | '/(tabs)/video-converter' | '/(tabs)/pdf-converter' | '/(tabs)/docs-converter' | '/(tabs)/image-converter'> = {
     text: '/(tabs)/text-converter',
     voice: '/(tabs)/voice-converter',
     audio: '/(tabs)/audio-converter',
     video: '/(tabs)/video-converter',
     pdf: '/(tabs)/pdf-converter',
     docs: '/(tabs)/docs-converter',
+    image: '/(tabs)/image-converter',
 };
 
 const HOME_OPTIONS: {
@@ -71,6 +72,12 @@ const HOME_OPTIONS: {
             title: 'Docs File',
             description: 'Translate document files quickly.',
             icon: 'reader-outline',
+        },
+        {
+            id: 'image',
+            title: 'Image File',
+            description: 'Extract text from images and translate it.',
+            icon: 'image-outline',
         },
     ];
 
@@ -226,7 +233,7 @@ export default function HomeScreen() {
                     return (
                         <Pressable
                             key={option.id}
-                            onPress={() => router.push(ROUTE_BY_OPTION[option.id])}
+                            onPress={() => router.push(ROUTE_BY_OPTION[option.id] as any)}
                             className="flex-row items-center justify-between rounded-2xl border border-slate-300 bg-white p-3.5 dark:border-slate-700 dark:bg-slate-900">
                             <View className="flex-1 pr-3">
                                 <View className="flex-row items-center gap-2">

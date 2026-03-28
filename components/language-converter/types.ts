@@ -16,6 +16,7 @@ export type ModeFlags = {
     isVideoMode: boolean;
     isPdfMode: boolean;
     isDocsMode: boolean;
+    isImageMode: boolean;
     isFileMode: boolean;
 };
 

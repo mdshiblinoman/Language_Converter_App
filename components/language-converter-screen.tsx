@@ -27,6 +27,7 @@ import {
     requestTranslatedAudio,
 } from '@/lib/audio-translation';
 import { addChatHistoryEntry } from '@/lib/chat-history';
+import { requestTranslatedImage } from '@/lib/image-translation';
 import {
     SOURCE_LANGUAGES,
     TARGET_LANGUAGES,
@@ -139,7 +140,11 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
             const mediaFile = await pickMediaFile(modeFlags);
             if (!mediaFile) return;
             setSelectedMediaFile(mediaFile);
-            if (modeFlags.isAudioMode || modeFlags.isVideoMode || modeFlags.isPdfMode || modeFlags.isDocsMode) {
+            if (modeFlags.isImageMode) {
+                setTranslatedText('');
+            }
+
+            if (modeFlags.isAudioMode || modeFlags.isVideoMode || modeFlags.isPdfMode || modeFlags.isDocsMode || modeFlags.isImageMode) {
                 setMediaStatus(
                     modeFlags.isAudioMode
                         ? 'Audio selected. Ready to translate and download.'
@@ -147,7 +152,9 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
                             ? 'Video selected. Ready to translate and download.'
                             : modeFlags.isPdfMode
                                 ? 'PDF selected. Ready to translate and download.'
-                                : 'Document selected. Ready to translate and download.'
+                                : modeFlags.isDocsMode
+                                    ? 'Document selected. Ready to translate and download.'
+                                    : 'Image selected. Ready to extract and translate text.'
                 );
             }
         } catch (requestError) {
@@ -164,6 +171,8 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
                 setError('Please choose a PDF file first.');
             } else if (modeFlags.isDocsMode) {
                 setError('Please choose a document file first.');
+            } else if (modeFlags.isImageMode) {
+                setError('Please choose an image file first.');
             } else {
                 setError('Please choose an audio file first.');
             }
@@ -183,6 +192,8 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
             setMediaStatus('Uploading PDF and generating translated file...');
         } else if (modeFlags.isDocsMode) {
             setMediaStatus('Uploading document and generating translated file...');
+        } else if (modeFlags.isImageMode) {
+            setMediaStatus('Uploading image and extracting translatable text...');
         } else {
             setMediaStatus('Uploading audio and converting language...');
         }
@@ -224,6 +235,26 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
                 setMediaStatus('Translated document ready. Download is starting...');
                 await downloadOrShareTranslatedDoc(translatedResult);
                 setMediaStatus('Translated document downloaded successfully.');
+            } else if (modeFlags.isImageMode) {
+                const translatedResult = await requestTranslatedImage({
+                    file: selectedMediaFile,
+                    sourceCode: sourceLanguage.code,
+                    targetCode: targetLanguage.code,
+                });
+
+                setTranslatedText(translatedResult.translatedText);
+                setMediaStatus('Image text translated successfully.');
+
+                if (user?.uid && translatedResult.sourceText.trim() && translatedResult.translatedText.trim()) {
+                    await addChatHistoryEntry({
+                        userId: user.uid,
+                        modeLabel,
+                        sourceLanguageCode: sourceLanguage.code,
+                        targetLanguageCode: targetLanguage.code,
+                        sourceText: translatedResult.sourceText,
+                        translatedText: translatedResult.translatedText,
+                    });
+                }
             } else {
                 const translatedResult = await requestTranslatedAudio({
                     file: selectedMediaFile,
@@ -245,7 +276,9 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
                         ? 'PDF translation failed.'
                         : modeFlags.isDocsMode
                             ? 'Document translation failed.'
-                            : 'Audio translation failed.';
+                            : modeFlags.isImageMode
+                                ? 'Image translation failed.'
+                                : 'Audio translation failed.';
             setError(message);
             setMediaStatus(message);
         } finally {
@@ -255,7 +288,9 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
 
     useEffect(() => {
         if (modeFlags.isFileMode) {
-            setTranslatedText('');
+            if (!modeFlags.isImageMode) {
+                setTranslatedText('');
+            }
             setIsTranslating(false);
             return;
         }
@@ -419,7 +454,7 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
                                 </View>
                             ) : null}
 
-                            {modeFlags.isAudioMode || modeFlags.isVideoMode || modeFlags.isPdfMode || modeFlags.isDocsMode ? (
+                            {modeFlags.isAudioMode || modeFlags.isVideoMode || modeFlags.isPdfMode || modeFlags.isDocsMode || modeFlags.isImageMode ? (
                                 <>
                                     <Pressable
                                         onPress={handleTranslateMediaAndDownload}
@@ -436,7 +471,9 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
                                                             ? 'Processing PDF...'
                                                             : modeFlags.isDocsMode
                                                                 ? 'Processing Document...'
-                                                                : 'Processing Audio...'}
+                                                                : modeFlags.isImageMode
+                                                                    ? 'Processing Image...'
+                                                                    : 'Processing Audio...'}
                                                 </Text>
                                             </View>
                                         ) : (
@@ -447,7 +484,9 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
                                                         ? 'Translate PDF & Download'
                                                         : modeFlags.isDocsMode
                                                             ? 'Translate Document & Download'
-                                                            : 'Translate Audio & Download'}
+                                                            : modeFlags.isImageMode
+                                                                ? 'Extract & Translate Image Text'
+                                                                : 'Translate Audio & Download'}
                                             </Text>
                                         )}
                                     </Pressable>
@@ -470,7 +509,7 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
 
                 {error ? <Text className="font-semibold text-red-700">{error}</Text> : null}
 
-                {!modeFlags.isFileMode ? (
+                {!modeFlags.isFileMode || modeFlags.isImageMode ? (
                     <View className="min-h-28 gap-2 rounded-2xl border border-slate-300 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
                         <Text className="text-base font-semibold text-slate-900 dark:text-slate-100">Translated Text</Text>
                         <Text
