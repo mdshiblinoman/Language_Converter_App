@@ -183,8 +183,7 @@ GEMINI_VISION_MODEL=gemini-2.0-flash
 
 1. Get Gemini API key
 2. Update `.env` file
-3. Update `.env` file
-4. Start the server
-5. Test endpoints
+3. Start the server
+4. Test endpoints
 
 That's it! The language converter is ready to use.

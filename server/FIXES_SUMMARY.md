@@ -113,7 +113,6 @@ See `SETUP.md` for:
 1. Get Gemini API key
 2. Update `.env` file with API key
 3. Restart server
-4. Restart server
-5. Start using the translation features
+4. Start using the translation features
 
 **Need help?** Check `SETUP.md` for detailed instructions.
