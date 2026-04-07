@@ -7,6 +7,7 @@ const { docsRoutes } = require('./routes/docs-routes');
 const { errorHandler } = require('./middleware/error-handler');
 const { imageRoutes } = require('./routes/image-routes');
 const { pdfRoutes } = require('./routes/pdf-routes');
+const { textRoutes } = require('./routes/text-routes');
 const { videoRoutes } = require('./routes/video-routes');
 
 const app = express();
@@ -27,6 +28,7 @@ app.use('/api/docs', docsRoutes);
 app.use('/api/video', videoRoutes);
 app.use('/api/pdf', pdfRoutes);
 app.use('/api/image', imageRoutes);
+app.use('/api/text', textRoutes);
 app.use(errorHandler);
 
 module.exports = {
