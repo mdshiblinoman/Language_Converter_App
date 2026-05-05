@@ -1,10 +1,18 @@
-import {
-    ExpoSpeechRecognitionModule,
-    useSpeechRecognitionEvent,
-} from 'expo-speech-recognition';
 import { useState } from 'react';
 
 import { SPEECH_LOCALE_BY_CODE } from '@/lib/languages';
+
+type SpeechRecognitionModuleType = typeof import('expo-speech-recognition');
+
+let speechRecognitionModule: SpeechRecognitionModuleType | null = null;
+
+try {
+    speechRecognitionModule = require('expo-speech-recognition') as SpeechRecognitionModuleType;
+} catch {
+    speechRecognitionModule = null;
+}
+
+const useSpeechRecognitionEvent = speechRecognitionModule?.useSpeechRecognitionEvent ?? (() => undefined);
 
 type UseVoiceInputParams = {
     sourceLanguageCode: string;
@@ -15,6 +23,8 @@ export function useVoiceInput({ sourceLanguageCode, onFinalTranscript }: UseVoic
     const [isListening, setIsListening] = useState(false);
     const [speechError, setSpeechError] = useState('');
     const [interimTranscript, setInterimTranscript] = useState('');
+
+    const ExpoSpeechRecognitionModule = speechRecognitionModule?.ExpoSpeechRecognitionModule;
 
     useSpeechRecognitionEvent('start', () => {
         setIsListening(true);
@@ -47,6 +57,11 @@ export function useVoiceInput({ sourceLanguageCode, onFinalTranscript }: UseVoic
 
     const startVoiceInput = async () => {
         try {
+            if (!ExpoSpeechRecognitionModule) {
+                setSpeechError('Voice input is not available in Expo Go. Use a development build to enable it.');
+                return;
+            }
+
             const isAvailable = ExpoSpeechRecognitionModule.isRecognitionAvailable();
             if (!isAvailable) {
                 setSpeechError('Voice recognition is not available on this device.');
@@ -80,6 +95,10 @@ export function useVoiceInput({ sourceLanguageCode, onFinalTranscript }: UseVoic
 
     const stopVoiceInput = () => {
         try {
+            if (!ExpoSpeechRecognitionModule) {
+                return;
+            }
+
             ExpoSpeechRecognitionModule.stop();
         } catch (voiceError) {
             console.error(voiceError);

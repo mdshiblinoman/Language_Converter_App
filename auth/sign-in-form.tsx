@@ -10,6 +10,7 @@ type SignInFormProps = {
     onEmailChange: (value: string) => void;
     onPasswordChange: (value: string) => void;
     onSubmit: () => void;
+    onGoogleSignIn: () => void;
     onSwitchToSignUp: () => void;
 };
 
@@ -21,6 +22,7 @@ export function SignInForm({
     onEmailChange,
     onPasswordChange,
     onSubmit,
+    onGoogleSignIn,
     onSwitchToSignUp,
 }: SignInFormProps) {
     const [showPassword, setShowPassword] = useState(false);
@@ -67,18 +69,18 @@ export function SignInForm({
             <Pressable
                 onPress={onSubmit}
                 disabled={isSubmitting}
-                className="min-h-12 items-center justify-center rounded-xl bg-emerald-600 px-6 py-4 dark:bg-emerald-500"
+                className="min-h-12 items-center justify-center rounded-xl bg-emerald-600 px-5 py-2.5 dark:bg-emerald-500"
                 style={{ opacity: isSubmitting ? 0.7 : 1 }}>
                 {isSubmitting ? (
-                    <ActivityIndicator color="#ffffff" />
+                    <ActivityIndicator color="#3418b1" />
                 ) : (
-                    <Text className="font-bold text-white">Sign In</Text>
+                    <Text className="font-bold text-green-100">Sign In</Text>
                 )}
             </Pressable>
 
             <Pressable
                 onPress={onSwitchToSignUp}
-                className="items-center rounded-xl border border-slate-300 bg-slate-100 py-2.5 dark:border-slate-700 dark:bg-slate-950">
+                className="items-center rounded-xl border border-slate-300 bg-slate-100 py-2.5 dark:border-slate-700 dark:bg-slate-750">
                 <Text className="font-semibold text-slate-900 dark:text-slate-200">
                     {"Don't have an account? Create one"}
                 </Text>

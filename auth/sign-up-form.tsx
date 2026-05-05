@@ -133,7 +133,7 @@ export function SignUpForm({
 
             <Pressable
                 onPress={onSwitchToSignIn}
-                className="items-center rounded-xl border border-slate-300 bg-slate-100 py-2.5 dark:border-slate-700 dark:bg-slate-950">
+                className="items-center rounded-xl border border-slate-300 bg-slate-100 py-2.5 dark:border-slate-700 dark:bg-slate-750">
                 <Text className="font-semibold text-slate-900 dark:text-slate-200">
                     Already have an account? Sign In
                 </Text>

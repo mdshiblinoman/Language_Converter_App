@@ -2,12 +2,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import {
     createUserWithEmailAndPassword,
+    GoogleAuthProvider,
     signInWithEmailAndPassword,
+    signInWithPopup,
     updateProfile,
 } from 'firebase/auth';
 import { useState } from 'react';
 import {
     ActivityIndicator,
+    Platform,
     Pressable,
     ScrollView,
     Text,
@@ -116,6 +119,27 @@ export default function HomeScreen() {
         }
     };
 
+    const handleGoogleSignIn = async () => {
+        setAuthError('');
+
+        if (Platform.OS !== 'web') {
+            setAuthError('Google sign-in is currently configured for web only in this app.');
+            return;
+        }
+
+        setIsAuthSubmitting(true);
+
+        try {
+            const provider = new GoogleAuthProvider();
+            await signInWithPopup(auth, provider);
+        } catch (requestError) {
+            console.error(requestError);
+            setAuthError('Google sign-in failed. Please try again.');
+        } finally {
+            setIsAuthSubmitting(false);
+        }
+    };
+
     const handleSignUp = async () => {
         const normalizedName = fullName.trim();
         const normalizedPhone = phoneNumber.trim();
@@ -183,6 +207,7 @@ export default function HomeScreen() {
                             onEmailChange={setEmail}
                             onPasswordChange={setPassword}
                             onSubmit={handleSignIn}
+                            onGoogleSignIn={handleGoogleSignIn}
                             onSwitchToSignUp={() => {
                                 setAuthMode('sign-up');
                                 setAuthError('');
