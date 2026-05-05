@@ -67,7 +67,7 @@ export function SignInForm({
             <Pressable
                 onPress={onSubmit}
                 disabled={isSubmitting}
-                className="min-h-12 items-center justify-center rounded-xl bg-violet-700 dark:bg-violet-500"
+                className="min-h-12 items-center justify-center rounded-xl bg-emerald-600 px-6 py-4 dark:bg-emerald-500"
                 style={{ opacity: isSubmitting ? 0.7 : 1 }}>
                 {isSubmitting ? (
                     <ActivityIndicator color="#ffffff" />

@@ -355,7 +355,7 @@ export function LanguageConverterScreen({ modeLabel }: LanguageConverterScreenPr
         return () => {
             clearTimeout(timerId);
         };
-    }, [modeFlags.isFileMode, modeLabel, sourceText, sourceLanguage.code, targetLanguage.code, user?.uid]);
+    }, [modeFlags.isFileMode, modeFlags.isImageMode, modeLabel, sourceText, sourceLanguage.code, targetLanguage.code, user?.uid]);
 
     return (
         <View className="flex-1 bg-cyan-50 dark:bg-slate-950">
